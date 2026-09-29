@@ -1,8 +1,6 @@
 # 阶段二：多模态动态预问诊
 
-负责人：陈科顺 `@keshunchen`。
-
-本目录是阶段二的实现：数字人（LiveTalking + wav2lip）、本地 ASR/TTS/LLM 接入、OpenClaw 预问诊 agent 工作区、患者端预问诊页与医生工作台，已部署在 DGX Spark 上运行（见文末「部署」）。跨阶段事件契约尚未通过 `[裁决]` Issue 冻结。设计约束：
+本目录是阶段二的实现：数字人（LiveTalking + wav2lip）、本地 ASR/TTS/LLM 接入、OpenClaw 预问诊 agent 工作区、患者端预问诊页与医生工作台，已部署在 DGX Spark 上运行（见文末「部署」）。跨阶段事件契约尚未冻结。设计约束：
 
 - 麦克风需单独授权；
 - 关键转写允许患者确认和修改；

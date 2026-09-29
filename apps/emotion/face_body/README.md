@@ -58,7 +58,7 @@ emotion-judge-watch（问诊结束后，不用大模型）──▶ live.py ─�
 
 - **逐帧**：`frames.jsonl` 每行 `{"t": 服务器秒, "f": {"bs": 26 个 blendshape, "m": 16 个数} | null, "p": 25 × [x, y, 可见度] | null}`；
   `to_frame_record` 还原成与 `analyze.frame_record` 同形的帧记录。网页版的头姿矩阵按原样（列主序）上传，
-  `matrix_from_flat` 按平移所在的位置自动还原（核实记录：`docs/superpowers/plans/notes/2026-09-29-mediapipe-js-matrix.md`）。
+  `matrix_from_flat` 按平移所在的位置自动还原（核实记录：`docs/notes/mediapipe-js-matrix.md`）。
 - **切段**：问诊记录里每条患者回答（`kind == "user"`，时间 `t_u`）一段，起点取「上一条助手回复或上一条患者回答」，
   最长 60 秒，且不早于开启摄像头；问诊记录的 `t` 是识别完成的时刻，所以一段覆盖「听题 + 作答」。
 - **统计**：本人基线 = 开启后前 5 秒的中位数；每段用 `windows.aggregate`（同样的平滑、滞回和阈值），

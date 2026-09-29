@@ -19,7 +19,7 @@
 | `memory/`、`DREAMS.md`、`USER.md` | agent 自动积累的记忆与会话语料，可能夹带问诊内容 |
 | `test-01.txt`、`AGENTS.md.bak-*`、`.git/` | 本机调试遗留与历史备份 |
 
-会话记录和 agent 记忆可能含问诊内容，按仓库根目录 `AGENTS.md` §3（不在仓库中提交真实患者信息）一律不入库；
+会话记录和 agent 记忆可能含问诊内容，按仓库的隐私原则（[`docs/safety-and-privacy.md`](../../../../docs/safety-and-privacy.md)：不在仓库中提交真实患者信息）一律不入库；
 从机器更新本快照时也只拷回上表「收录范围」内的文件。
 
 **已知差异**：Spark 上 `references/` 下 4 个文件名目前是乱码（UTF-8 被误按 CP866 解码，如 `хоЙхЕиф╕ОцЭец║Р.md` 应为 `安全与来源.md`），

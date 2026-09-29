@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""MediaPipe 模型文件：官方下载地址 + sha256。权重不进仓库（AGENTS.md），用 fetch-models 下载到本地目录。
+"""MediaPipe 模型文件：官方下载地址 + sha256。权重不进仓库，用 fetch-models 下载到本地目录。
 
 默认目录：环境变量 FACE_BODY_MODEL_DIR，否则本包下的 models/（.gitignore 已挡住任何 models/ 目录）。
 Spark 上直连 Google storage 可能慢，可以走局域网代理：fetch-models --proxy http://<代理>。

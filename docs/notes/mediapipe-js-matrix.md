@@ -1,7 +1,7 @@
 # MediaPipe 网页版头姿矩阵的行列序与资源加载（核实记录）
 
 - 日期：2026-09-29
-- 关联：`docs/superpowers/specs/2026-09-29-live-camera-observation-design.md` §5.1、§5.4、§9「矩阵行列序核实」、§11 风险表
+- 关联：实时摄像头观察（`apps/multimodal/web/camera-observe.js` 打点，`apps/emotion/face_body/live.py` 统计）
 - 结论：**`MATRIX_LAYOUT = "col"`**。网页版 `facialTransformationMatrixes[0].data` 是列主序；
   `apps/emotion/face_body/live.py` 与 `apps/multimodal/web/camera-metrics.js` 先按平移所在位置自动判断，判断不了时按 `col`。
 

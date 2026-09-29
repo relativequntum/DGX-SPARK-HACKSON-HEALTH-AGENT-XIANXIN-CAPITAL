@@ -15,7 +15,7 @@ mkdir -p "$WHEEL_DIR"
 cd "$WHEEL_DIR"
 
 # 解析每个包的 aarch64 轮子地址（PyPI 路径与阿里云镜像路径一致，直接替换域名）
-"$VENV_BIN_PY:-$(command -v python3)" - "$WHEEL_DIR" <<'PY'
+"${VENV_BIN_PY:-$(command -v python3)}" - "$WHEEL_DIR" <<'PY'
 import json, sys, urllib.request
 out_dir = sys.argv[1]
 pkgs = [("nvidia-cuda-nvrtc","13.0.48"),("nvidia-cuda-runtime","13.0.48"),("nvidia-cuda-cupti","13.0.48"),

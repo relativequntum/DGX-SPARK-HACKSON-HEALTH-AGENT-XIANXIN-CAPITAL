@@ -42,7 +42,7 @@ CAM_BLENDSHAPES = (
     "mouthPressLeft", "mouthPressRight", "jawOpen",
 )
 # MediaPipe 网页版 Matrix.data 的行列序：它把 MatrixData 的 packed_data 原样给出，默认列主序
-# （核实记录：docs/superpowers/plans/notes/2026-09-29-mediapipe-js-matrix.md）。
+# （核实记录：docs/notes/mediapipe-js-matrix.md）。
 # matrix_from_flat 先按平移所在位置自动判断，只有判断不了（平移为 0 的合成矩阵）时才用它。
 MATRIX_LAYOUT = "col"
 BASELINE_S = 5.0        # 本人基线：开启摄像头后前 5 秒

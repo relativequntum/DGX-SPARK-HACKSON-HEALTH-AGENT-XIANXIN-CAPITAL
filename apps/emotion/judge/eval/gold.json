@@ -1,5 +1,5 @@
 {
-  "note": "金标准由 Claude 起草（2026-09-24），待负责人与博士审阅。expected 里每条 = 应命中的 (turn_index, group)；risk 标 true 的必须被标为风险线索。allowed 里的是「命中也不算错」的模糊项。",
+  "note": "金标准起草于 2026-09-24，待博士审阅。expected 里每条 = 应命中的 (turn_index, group)；risk 标 true 的必须被标为风险线索。allowed 里的是「命中也不算错」的模糊项。",
   "sessions": {
     "s01_胃胀失眠": {
       "expected": [
