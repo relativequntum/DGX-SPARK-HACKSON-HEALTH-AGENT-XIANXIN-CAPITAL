@@ -1,0 +1,3 @@
+# workspace-tcm/ 是 Spark 上 agent 工作区的逐字节快照：禁止 Git 做任何换行转换
+# （references/来源索引.json 本身是 CRLF，其余为 LF；Windows 上 core.autocrlf=true 也不能改动它们）
+workspace-tcm/** -text

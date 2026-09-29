@@ -1,0 +1,33 @@
+name: 任务
+description: 可执行、可验证的开发或文档任务
+labels: ["type:task"]
+title: "[任务] "
+body:
+  - type: input
+    id: owner
+    attributes: {label: 负责人, placeholder: "@github-login"}
+    validations: {required: true}
+  - type: textarea
+    id: value
+    attributes: {label: 用户价值与背景}
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes: {label: 工作范围, placeholder: "要做：\n- ...\n\n不做：\n- ..."}
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes: {label: 验收标准, placeholder: "- [ ] 可观察结果\n- [ ] 测试/演示命令"}
+    validations: {required: true}
+  - type: textarea
+    id: contract
+    attributes: {label: 接口、数据与依赖}
+  - type: dropdown
+    id: privacy
+    attributes:
+      label: 医疗安全或隐私影响
+      options: ["无", "有，已说明缓解措施", "不确定，需要领域专家评审"]
+    validations: {required: true}
+  - type: textarea
+    id: verification
+    attributes: {label: 完成通报（完成后填写）, description: "改动、验证命令及结果、commit/PR、剩余风险。"}

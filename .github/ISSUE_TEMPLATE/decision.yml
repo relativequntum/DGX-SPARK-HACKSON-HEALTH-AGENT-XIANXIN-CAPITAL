@@ -1,0 +1,26 @@
+name: 裁决
+description: 公共契约、文件归属或纪律解释的唯一属主裁决
+labels: ["type:decision"]
+title: "[裁决] "
+body:
+  - type: input
+    id: owner
+    attributes: {label: 唯一属主, placeholder: "@relativequntum 或对应目录属主"}
+    validations: {required: true}
+  - type: textarea
+    id: conflict
+    attributes: {label: 需要裁决的事项, description: "列出当前分歧、相关 Issue/PR 和受影响契约。"}
+    validations: {required: true}
+  - type: textarea
+    id: options
+    attributes: {label: 可选方案及权衡}
+    validations: {required: true}
+  - type: dropdown
+    id: safety
+    attributes:
+      label: 是否影响医疗安全、隐私或跨阶段契约
+      options: ["是", "否", "不确定，需要评审"]
+    validations: {required: true}
+  - type: textarea
+    id: decision
+    attributes: {label: 裁决结论（关闭前由属主填写）, description: "写明选择、理由、生效范围和后续动作。"}

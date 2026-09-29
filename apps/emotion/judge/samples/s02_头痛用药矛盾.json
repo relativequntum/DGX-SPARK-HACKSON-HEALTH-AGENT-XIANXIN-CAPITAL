@@ -1,0 +1,20 @@
+{
+  "session_id": "s02_头痛用药矛盾",
+  "note": "虚构样本。考察：用药前后矛盾、过敏史、信息缺口。",
+  "turns": [
+    {"role": "agent", "text": "您好，今天主要是哪里不舒服？", "question_id": "chief"},
+    {"role": "patient", "text": "头痛，一到下午就开始，已经一个多星期了。"},
+    {"role": "agent", "text": "痛的时候有没有恶心、怕光或者看东西模糊？", "question_id": "associated"},
+    {"role": "patient", "text": "有点怕光，恶心倒没有。"},
+    {"role": "agent", "text": "这段时间有没有吃什么止痛药？", "question_id": "medication"},
+    {"role": "patient", "text": "没吃药，想着忍忍就过去了。"},
+    {"role": "agent", "text": "对什么药物过敏吗？", "question_id": "allergy"},
+    {"role": "patient", "text": "青霉素过敏，小时候打针起过疹子。"},
+    {"role": "agent", "text": "最近血压量过吗？", "question_id": "bp"},
+    {"role": "patient", "text": "没量过，家里没有血压计。"},
+    {"role": "agent", "text": "还有什么想补充的吗？", "question_id": "extra"},
+    {"role": "patient", "text": "哦对了，这几天每天晚上吃两片布洛芬，不然睡不着，算不算药？"},
+    {"role": "agent", "text": "算的，谢谢补充。家里有人有类似头痛吗？", "question_id": "family"},
+    {"role": "patient", "text": "我妈有偏头痛。"}
+  ]
+}

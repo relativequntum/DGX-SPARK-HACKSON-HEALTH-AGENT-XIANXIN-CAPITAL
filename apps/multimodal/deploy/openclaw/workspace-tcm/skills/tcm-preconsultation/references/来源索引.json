@@ -1,0 +1,1246 @@
+{
+  "package_version": "2.1.0",
+  "purpose": "仅用于关联问法的来源及旧模块追溯，不是必答题目录或患者事实",
+  "sources": [
+    {
+      "source_id": "TCMDIAG-9787513268493-CH03",
+      "title": "中医诊断学",
+      "isbn": "9787513268493",
+      "epub_sha256": "ebc5fdff5ea8c6fb6f917b48c52b2c7c8653db2bcd637d978851489d900dc6ad",
+      "chapter_path": "OEBPS/Text/txt005.xhtml",
+      "chapter_title": "第三章 问诊"
+    }
+  ],
+  "paragraph_locator": "按UTF-8读取EPUB内部章节，依文档顺序取body中的p及h1-h4，从0编号P000；不是纸质页码",
+  "adaptation": "采集属性的依据见教材知识定位；患者话术、主诉分组、女性月经独立板块、年龄提示、常规覆盖和结束规则为项目改编。睡眠现代病史、风险规则和绝经状态记录边界的网页来源见安全与来源.md。",
+  "groups": [
+    {
+      "group_id": "G-BASIC",
+      "knowledge_refs": [
+        "K02-001",
+        "K02-002"
+      ],
+      "legacy_question_ids": [
+        "B08",
+        "C01",
+        "C08",
+        "N39"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-GASTRIC",
+      "knowledge_refs": [
+        "K05-001",
+        "K05-002",
+        "K05-020",
+        "K02-003",
+        "K02-004",
+        "K02-005"
+      ],
+      "legacy_question_ids": [
+        "A01",
+        "B04",
+        "H01",
+        "H02",
+        "H03",
+        "H04",
+        "H05",
+        "H06",
+        "H07",
+        "H08",
+        "H09",
+        "N06",
+        "N07",
+        "N08",
+        "N09",
+        "T11"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-SLEEP",
+      "knowledge_refs": [
+        "K08-001",
+        "K08-002",
+        "K08-003",
+        "K08-004",
+        "K08-005",
+        "K02-003",
+        "K02-005"
+      ],
+      "legacy_question_ids": [
+        "A01",
+        "B04",
+        "C07",
+        "H01",
+        "H06",
+        "H07",
+        "H08",
+        "H09",
+        "N19",
+        "N20",
+        "T09",
+        "T09a",
+        "T11"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-DISEASE",
+      "knowledge_refs": [
+        "K02-002",
+        "K02-005",
+        "K02-006"
+      ],
+      "legacy_question_ids": [
+        "A01",
+        "B04",
+        "C01",
+        "C08",
+        "H01",
+        "H06",
+        "H07",
+        "H08",
+        "H09",
+        "N39",
+        "T11"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-MENSTRUAL",
+      "knowledge_refs": [
+        "K11-002",
+        "K11-009",
+        "K11-010",
+        "K11-011"
+      ],
+      "legacy_question_ids": [
+        "F02",
+        "F03",
+        "N33",
+        "N34",
+        "N35",
+        "N36"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-ROUTINE",
+      "knowledge_refs": [
+        "K09-008",
+        "K09-009",
+        "K08-001",
+        "K10-002",
+        "K10-016"
+      ],
+      "legacy_question_ids": [
+        "C05",
+        "C07",
+        "N19",
+        "N20",
+        "N22",
+        "N23",
+        "N29",
+        "N30",
+        "T04",
+        "T04a",
+        "T05",
+        "T05a",
+        "T06",
+        "T09",
+        "T09a"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    },
+    {
+      "group_id": "G-GENERAL",
+      "knowledge_refs": [
+        "K03-001",
+        "K03-002",
+        "K03-003",
+        "K03-004",
+        "K03-005",
+        "K03-026",
+        "K04-001",
+        "K04-004",
+        "K04-005",
+        "K05-001",
+        "K05-002",
+        "K05-016",
+        "K06-002",
+        "K06-003",
+        "K06-004",
+        "K06-008",
+        "K06-009",
+        "K06-011",
+        "K06-012",
+        "K06-013",
+        "K06-014",
+        "K06-015",
+        "K07-002",
+        "K07-003",
+        "K07-004",
+        "K07-005",
+        "K07-007",
+        "K07-008",
+        "K07-009",
+        "K07-010",
+        "K07-011",
+        "K07-012",
+        "K09-001",
+        "K09-002",
+        "K09-005",
+        "K09-008",
+        "K09-009",
+        "K09-010",
+        "K09-021",
+        "K09-022",
+        "K09-023",
+        "K09-024",
+        "K09-025",
+        "K09-026",
+        "K09-027",
+        "K09-028",
+        "K10-002",
+        "K10-003",
+        "K10-004",
+        "K10-010",
+        "K10-013",
+        "K10-016",
+        "K10-017",
+        "K10-018",
+        "K10-019",
+        "K10-020",
+        "K10-023",
+        "K10-026",
+        "K11-002",
+        "K11-009",
+        "K11-010",
+        "K11-011",
+        "K11-012",
+        "K11-013",
+        "K12-001",
+        "K12-003",
+        "K12-005"
+      ],
+      "legacy_question_ids": [
+        "B01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "F02",
+        "F03",
+        "F04",
+        "H02",
+        "H03",
+        "H04",
+        "H05",
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N06",
+        "N07",
+        "N08",
+        "N09",
+        "N10",
+        "N11",
+        "N12",
+        "N13",
+        "N14",
+        "N15",
+        "N16",
+        "N17",
+        "N18",
+        "N21",
+        "N22",
+        "N23",
+        "N24",
+        "N25",
+        "N26",
+        "N27",
+        "N28",
+        "N29",
+        "N30",
+        "N31",
+        "N32",
+        "N33",
+        "N34",
+        "N35",
+        "N36",
+        "N37",
+        "P01",
+        "P02",
+        "P04",
+        "T01",
+        "T01a",
+        "T02",
+        "T02a",
+        "T03",
+        "T04",
+        "T04a",
+        "T05",
+        "T05a",
+        "T06",
+        "T07",
+        "T08",
+        "T08a"
+      ],
+      "legacy_note": "旧ID只说明知识联系，不调用旧题，不继承旧完成状态；多对多联系不表示字段已回答"
+    }
+  ],
+  "knowledge": [
+    {
+      "id": "K02-001",
+      "title": "一般情况与就诊背景",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_10",
+          "paragraph_start": "P024",
+          "paragraph_end": "P027"
+        }
+      ]
+    },
+    {
+      "id": "K02-002",
+      "title": "主诉及持续时间",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_12",
+          "paragraph_start": "P028",
+          "paragraph_end": "P031"
+        }
+      ]
+    },
+    {
+      "id": "K02-003",
+      "title": "现病史：起病情况",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_13",
+          "paragraph_start": "P032",
+          "paragraph_end": "P034"
+        }
+      ]
+    },
+    {
+      "id": "K02-004",
+      "title": "现病史：病变过程",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_13",
+          "paragraph_start": "P035",
+          "paragraph_end": "P035"
+        }
+      ]
+    },
+    {
+      "id": "K02-005",
+      "title": "现病史：诊治经过",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_13",
+          "paragraph_start": "P036",
+          "paragraph_end": "P036"
+        }
+      ]
+    },
+    {
+      "id": "K02-006",
+      "title": "现在症与相关全身情况",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_13",
+          "paragraph_start": "P037",
+          "paragraph_end": "P037"
+        }
+      ]
+    },
+    {
+      "id": "K03-001",
+      "title": "寒热总体采集",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_24",
+          "paragraph_start": "P062",
+          "paragraph_end": "P098"
+        }
+      ]
+    },
+    {
+      "id": "K03-002",
+      "title": "恶风：遇风怕冷",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_24",
+          "paragraph_start": "P064",
+          "paragraph_end": "P064"
+        }
+      ]
+    },
+    {
+      "id": "K03-003",
+      "title": "恶寒：取暖仍怕冷",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_24",
+          "paragraph_start": "P064",
+          "paragraph_end": "P064"
+        }
+      ]
+    },
+    {
+      "id": "K03-004",
+      "title": "畏寒：得温减轻",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_24",
+          "paragraph_start": "P064",
+          "paragraph_end": "P064"
+        }
+      ]
+    },
+    {
+      "id": "K03-005",
+      "title": "自觉发热与实测体温",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_24",
+          "paragraph_start": "P065",
+          "paragraph_end": "P065"
+        }
+      ]
+    },
+    {
+      "id": "K03-026",
+      "title": "寒热往来",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_28",
+          "paragraph_start": "P094",
+          "paragraph_end": "P098"
+        }
+      ]
+    },
+    {
+      "id": "K04-001",
+      "title": "汗出总体及生理背景",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_29",
+          "paragraph_start": "P099",
+          "paragraph_end": "P102"
+        }
+      ]
+    },
+    {
+      "id": "K04-004",
+      "title": "自汗相关表现",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_31",
+          "paragraph_start": "P109",
+          "paragraph_end": "P109"
+        }
+      ]
+    },
+    {
+      "id": "K04-005",
+      "title": "盗汗相关表现",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_31",
+          "paragraph_start": "P110",
+          "paragraph_end": "P110"
+        }
+      ]
+    },
+    {
+      "id": "K05-001",
+      "title": "疼痛问诊总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_33",
+          "paragraph_start": "P120",
+          "paragraph_end": "P122"
+        }
+      ]
+    },
+    {
+      "id": "K05-002",
+      "title": "疼痛性质与变化总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_34",
+          "paragraph_start": "P123",
+          "paragraph_end": "P138"
+        }
+      ]
+    },
+    {
+      "id": "K05-016",
+      "title": "疼痛部位总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_35",
+          "paragraph_start": "P139",
+          "paragraph_end": "P140"
+        }
+      ]
+    },
+    {
+      "id": "K05-020",
+      "title": "脘痛",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_35",
+          "paragraph_start": "P153",
+          "paragraph_end": "P153"
+        }
+      ]
+    },
+    {
+      "id": "K06-002",
+      "title": "头晕",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_37",
+          "paragraph_start": "P170",
+          "paragraph_end": "P176"
+        }
+      ]
+    },
+    {
+      "id": "K06-003",
+      "title": "胸闷",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_38",
+          "paragraph_start": "P177",
+          "paragraph_end": "P184"
+        }
+      ]
+    },
+    {
+      "id": "K06-004",
+      "title": "心悸",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_39",
+          "paragraph_start": "P185",
+          "paragraph_end": "P192"
+        }
+      ]
+    },
+    {
+      "id": "K06-008",
+      "title": "脘痞",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_41",
+          "paragraph_start": "P197",
+          "paragraph_end": "P203"
+        }
+      ]
+    },
+    {
+      "id": "K06-009",
+      "title": "腹胀",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_42",
+          "paragraph_start": "P204",
+          "paragraph_end": "P211"
+        }
+      ]
+    },
+    {
+      "id": "K06-011",
+      "title": "身重",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_43",
+          "paragraph_start": "P213",
+          "paragraph_end": "P218"
+        }
+      ]
+    },
+    {
+      "id": "K06-012",
+      "title": "身痒",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_44",
+          "paragraph_start": "P219",
+          "paragraph_end": "P220"
+        }
+      ]
+    },
+    {
+      "id": "K06-013",
+      "title": "麻木",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_45",
+          "paragraph_start": "P221",
+          "paragraph_end": "P227"
+        }
+      ]
+    },
+    {
+      "id": "K06-014",
+      "title": "拘挛",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_46",
+          "paragraph_start": "P228",
+          "paragraph_end": "P230"
+        }
+      ]
+    },
+    {
+      "id": "K06-015",
+      "title": "乏力",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_47",
+          "paragraph_start": "P231",
+          "paragraph_end": "P235"
+        }
+      ]
+    },
+    {
+      "id": "K07-002",
+      "title": "问耳",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_49",
+          "paragraph_start": "P238",
+          "paragraph_end": "P245"
+        }
+      ]
+    },
+    {
+      "id": "K07-003",
+      "title": "耳鸣",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_49",
+          "paragraph_start": "P239",
+          "paragraph_end": "P242"
+        }
+      ]
+    },
+    {
+      "id": "K07-004",
+      "title": "重听",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_49",
+          "paragraph_start": "P243",
+          "paragraph_end": "P245"
+        }
+      ]
+    },
+    {
+      "id": "K07-005",
+      "title": "耳聋",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_49",
+          "paragraph_start": "P243",
+          "paragraph_end": "P245"
+        }
+      ]
+    },
+    {
+      "id": "K07-007",
+      "title": "目痛",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P248",
+          "paragraph_end": "P248"
+        }
+      ]
+    },
+    {
+      "id": "K07-008",
+      "title": "目痒",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P249",
+          "paragraph_end": "P249"
+        }
+      ]
+    },
+    {
+      "id": "K07-009",
+      "title": "目眩",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P250",
+          "paragraph_end": "P250"
+        }
+      ]
+    },
+    {
+      "id": "K07-010",
+      "title": "目昏",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P251",
+          "paragraph_end": "P252"
+        }
+      ]
+    },
+    {
+      "id": "K07-011",
+      "title": "雀盲",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P251",
+          "paragraph_end": "P252"
+        }
+      ]
+    },
+    {
+      "id": "K07-012",
+      "title": "歧视",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_50",
+          "paragraph_start": "P251",
+          "paragraph_end": "P252"
+        }
+      ]
+    },
+    {
+      "id": "K08-001",
+      "title": "睡眠问诊总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_51",
+          "paragraph_start": "P253",
+          "paragraph_end": "P254"
+        }
+      ]
+    },
+    {
+      "id": "K08-002",
+      "title": "失眠",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_52",
+          "paragraph_start": "P255",
+          "paragraph_end": "P258"
+        }
+      ]
+    },
+    {
+      "id": "K08-003",
+      "title": "嗜睡",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_53",
+          "paragraph_start": "P259",
+          "paragraph_end": "P262"
+        }
+      ]
+    },
+    {
+      "id": "K08-004",
+      "title": "昏睡与嗜睡区别",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_53",
+          "paragraph_start": "P262",
+          "paragraph_end": "P262"
+        }
+      ]
+    },
+    {
+      "id": "K08-005",
+      "title": "多梦",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_51",
+          "paragraph_start": "P254",
+          "paragraph_end": "P256"
+        }
+      ]
+    },
+    {
+      "id": "K09-001",
+      "title": "口渴感：是否口干口渴",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_54",
+          "paragraph_start": "P263",
+          "paragraph_end": "P267"
+        }
+      ]
+    },
+    {
+      "id": "K09-002",
+      "title": "实际饮水量与温度偏好",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_55",
+          "paragraph_start": "P266",
+          "paragraph_end": "P267"
+        }
+      ]
+    },
+    {
+      "id": "K09-005",
+      "title": "渴不多饮",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_55",
+          "paragraph_start": "P274",
+          "paragraph_end": "P280"
+        }
+      ]
+    },
+    {
+      "id": "K09-008",
+      "title": "食欲：想不想吃",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_56",
+          "paragraph_start": "P281",
+          "paragraph_end": "P284"
+        }
+      ]
+    },
+    {
+      "id": "K09-009",
+      "title": "食量：实际吃了多少",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_56",
+          "paragraph_start": "P282",
+          "paragraph_end": "P283"
+        }
+      ]
+    },
+    {
+      "id": "K09-010",
+      "title": "食欲减退",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_56",
+          "paragraph_start": "P284",
+          "paragraph_end": "P287"
+        }
+      ]
+    },
+    {
+      "id": "K09-021",
+      "title": "异常口味总体",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P304",
+          "paragraph_end": "P305"
+        }
+      ]
+    },
+    {
+      "id": "K09-022",
+      "title": "口淡",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P306",
+          "paragraph_end": "P306"
+        }
+      ]
+    },
+    {
+      "id": "K09-023",
+      "title": "口苦",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P307",
+          "paragraph_end": "P307"
+        }
+      ]
+    },
+    {
+      "id": "K09-024",
+      "title": "口甜",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P308",
+          "paragraph_end": "P308"
+        }
+      ]
+    },
+    {
+      "id": "K09-025",
+      "title": "口酸",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P309",
+          "paragraph_end": "P309"
+        }
+      ]
+    },
+    {
+      "id": "K09-026",
+      "title": "口咸",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P310",
+          "paragraph_end": "P310"
+        }
+      ]
+    },
+    {
+      "id": "K09-027",
+      "title": "口涩",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P311",
+          "paragraph_end": "P311"
+        }
+      ]
+    },
+    {
+      "id": "K09-028",
+      "title": "口黏腻",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_57",
+          "paragraph_start": "P312",
+          "paragraph_end": "P312"
+        }
+      ]
+    },
+    {
+      "id": "K10-002",
+      "title": "问大便总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_59",
+          "paragraph_start": "P317",
+          "paragraph_end": "P318"
+        }
+      ]
+    },
+    {
+      "id": "K10-003",
+      "title": "便秘",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_59",
+          "paragraph_start": "P319",
+          "paragraph_end": "P324"
+        }
+      ]
+    },
+    {
+      "id": "K10-004",
+      "title": "泄泻",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_59",
+          "paragraph_start": "P325",
+          "paragraph_end": "P330"
+        }
+      ]
+    },
+    {
+      "id": "K10-010",
+      "title": "便血",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_59",
+          "paragraph_start": "P342",
+          "paragraph_end": "P344"
+        }
+      ]
+    },
+    {
+      "id": "K10-013",
+      "title": "排便不爽",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_59",
+          "paragraph_start": "P348",
+          "paragraph_end": "P351"
+        }
+      ]
+    },
+    {
+      "id": "K10-016",
+      "title": "问小便总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P358",
+          "paragraph_end": "P359"
+        }
+      ]
+    },
+    {
+      "id": "K10-017",
+      "title": "尿量增多",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P360",
+          "paragraph_end": "P363"
+        }
+      ]
+    },
+    {
+      "id": "K10-018",
+      "title": "尿量减少",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P364",
+          "paragraph_end": "P366"
+        }
+      ]
+    },
+    {
+      "id": "K10-019",
+      "title": "尿次增多",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P367",
+          "paragraph_end": "P370"
+        }
+      ]
+    },
+    {
+      "id": "K10-020",
+      "title": "尿次减少",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P371",
+          "paragraph_end": "P371"
+        }
+      ]
+    },
+    {
+      "id": "K10-023",
+      "title": "尿中带血",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P375",
+          "paragraph_end": "P377"
+        }
+      ]
+    },
+    {
+      "id": "K10-026",
+      "title": "小便涩痛",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_60",
+          "paragraph_start": "P382",
+          "paragraph_end": "P383"
+        }
+      ]
+    },
+    {
+      "id": "K11-002",
+      "title": "问月经总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_62",
+          "paragraph_start": "P391",
+          "paragraph_end": "P396"
+        }
+      ]
+    },
+    {
+      "id": "K11-009",
+      "title": "闭经",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_62",
+          "paragraph_start": "P416",
+          "paragraph_end": "P422"
+        }
+      ]
+    },
+    {
+      "id": "K11-010",
+      "title": "经色、经质异常",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_62",
+          "paragraph_start": "P423",
+          "paragraph_end": "P423"
+        }
+      ]
+    },
+    {
+      "id": "K11-011",
+      "title": "痛经",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_62",
+          "paragraph_start": "P424",
+          "paragraph_end": "P428"
+        }
+      ]
+    },
+    {
+      "id": "K11-012",
+      "title": "问带下总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_63",
+          "paragraph_start": "P429",
+          "paragraph_end": "P432"
+        }
+      ]
+    },
+    {
+      "id": "K11-013",
+      "title": "白带",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_63",
+          "paragraph_start": "P433",
+          "paragraph_end": "P433"
+        }
+      ]
+    },
+    {
+      "id": "K12-001",
+      "title": "问小儿总则",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_64",
+          "paragraph_start": "P437",
+          "paragraph_end": "P439"
+        }
+      ]
+    },
+    {
+      "id": "K12-003",
+      "title": "喂养与生长发育",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_65",
+          "paragraph_start": "P442",
+          "paragraph_end": "P442"
+        }
+      ]
+    },
+    {
+      "id": "K12-005",
+      "title": "小儿发病原因",
+      "source_refs": [
+        {
+          "source_id": "TCMDIAG-9787513268493-CH03",
+          "heading_anchor": "txt005_67",
+          "paragraph_start": "P445",
+          "paragraph_end": "P446"
+        }
+      ]
+    }
+  ]
+}

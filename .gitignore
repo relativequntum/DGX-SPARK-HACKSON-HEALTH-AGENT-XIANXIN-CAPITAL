@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+env.local.sh
+*.pem
+*.key
+
+# Patient/private data and large model assets
+data/private/
+data/raw/
+recordings/
+models/
+checkpoints/
+*.gguf
+*.safetensors
+
+# IDE / OS
+.vscode/
+.idea/
+.codebuddy/
+.DS_Store
+Thumbs.db
+
+# Runtime output
+logs/
+outputs/
+coverage.xml
+htmlcov/

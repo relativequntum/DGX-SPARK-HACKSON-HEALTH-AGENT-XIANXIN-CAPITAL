@@ -1,0 +1,384 @@
+diff --git a/app.py b/app.py
+index 7e076c2..54c0652 100644
+--- a/app.py
++++ b/app.py
+@@ -208,6 +208,9 @@ def main():
+         loop.run_until_complete(runner.setup())
+         site = web.TCPSite(runner, '0.0.0.0', opt.listenport)
+         loop.run_until_complete(site.start())
++        if getattr(opt, "session_timeout", 0) > 0:
++            loop.create_task(session_manager.start_idle_reaper(opt.session_timeout))
++            logger.info("idle session reaper enabled: timeout=%ss", opt.session_timeout)
+         if opt.transport=='rtcpush':
+             for k in range(opt.max_session):
+                 push_url = opt.push_url
+diff --git a/config.py b/config.py
+index c1e8dee..36518f7 100644
+--- a/config.py
++++ b/config.py
+@@ -92,6 +92,8 @@ def parse_args():
+     parser.add_argument('--push_url', type=str,
+                         default='http://localhost:1985/rtc/v1/whip/?app=live&stream=livestream')
+     parser.add_argument('--max_session', type=int, default=5)
++    parser.add_argument('--session_timeout', type=int, default=120,
++                        help="æ å¿è·³ä¼è¯çç©ºé²åæ¶ç§æ°ï¼0=ä¸åæ¶")
+     parser.add_argument('--listenport', type=int, default=8010,
+                         help="web listen port")
+ 
+diff --git a/server/routes.py b/server/routes.py
+index 8037d06..cea8e68 100644
+--- a/server/routes.py
++++ b/server/routes.py
+@@ -49,6 +49,7 @@ async def human(request):
+         avatar_session = get_session(request, sessionid)
+         if avatar_session is None:
+             return json_error("session not found")
++        session_manager.touch(sessionid)
+ 
+         if params.get('interrupt'):
+             avatar_session.flush_talk()
+@@ -80,6 +81,7 @@ async def interrupt_talk(request):
+         avatar_session = get_session(request, sessionid)
+         if avatar_session is None:
+             return json_error("session not found")
++        session_manager.touch(sessionid)
+         avatar_session.flush_talk()
+         return json_ok()
+     except Exception as e:
+@@ -100,6 +102,7 @@ async def humanaudio(request):
+         avatar_session = get_session(request, sessionid)
+         if avatar_session is None:
+             return json_error("session not found")
++        session_manager.touch(sessionid)
+         avatar_session.put_audio_file(filebytes, datainfo)
+         return json_ok()
+     except Exception as e:
+@@ -115,6 +118,7 @@ async def set_audiotype(request):
+         avatar_session = get_session(request, sessionid)
+         if avatar_session is None:
+             return json_error("session not found")
++        session_manager.touch(sessionid)
+         avatar_session.set_custom_state(params['audiotype'])
+         return json_ok()
+     except Exception as e:
+@@ -130,6 +134,7 @@ async def record(request):
+         avatar_session = get_session(request, sessionid)
+         if avatar_session is None:
+             return json_error("session not found")
++        session_manager.touch(sessionid)
+         if params['type'] == 'start_record':
+             avatar_session.start_recording()
+         elif params['type'] == 'end_record':
+@@ -147,6 +152,7 @@ async def is_speaking(request):
+     avatar_session = get_session(request, sessionid)
+     if avatar_session is None:
+         return json_error("session not found")
++    session_manager.touch(sessionid)
+     return json_ok(data=avatar_session.is_speaking())
+ 
+ async def sse_handler(request):
+@@ -155,6 +161,7 @@ async def sse_handler(request):
+     avatar_session = session_manager.get_session(sessionid)
+     if avatar_session is None:
+         return json_error("session not found")
++    session_manager.touch(sessionid)
+ 
+     response = web.StreamResponse(
+         status=200,
+@@ -188,6 +195,26 @@ async def sse_handler(request):
+     return response
+ 
+ 
++async def ping(request):
++    """心跳：刷新会话活跃时间，避免被空闲回收器清理"""
++    try:
++        if request.method == "POST":
++            try:
++                params = await request.json()
++            except Exception:
++                params = {}
++            sessionid = str(params.get("sessionid", "") or request.query.get("sessionid", ""))
++        else:
++            sessionid = str(request.query.get("sessionid", ""))
++        if not sessionid or not session_manager.has_session(sessionid):
++            return json_error("session not found")
++        session_manager.touch(sessionid)
++        idle = session_manager.get_idle_seconds(sessionid)
++        return json_ok(data={"sessionid": sessionid, "idle": round(idle or 0.0, 1)})
++    except Exception as e:
++        logger.exception("ping exception:")
++        return json_error(str(e))
++
+ async def admin_config(request):
+     """Admin: 获取全局配置参数"""
+     try:
+@@ -221,6 +248,7 @@ async def admin_sessions(request):
+                         "batch_size": getattr(s_opt, "batch_size", 0),
+                         "customopt": getattr(s_opt, "customopt", []),
+                     })
++                s_data["idle"] = round(session_manager.get_idle_seconds(sid) or 0.0, 1)
+                 sessions_info.append(s_data)
+         return json_ok(data={"sessions": sessions_info})
+     except Exception as e:
+@@ -252,6 +280,8 @@ def setup_routes(app):
+     app.router.add_post("/is_speaking", is_speaking)
+     app.router.add_get("/api/admin/config", admin_config)
+     app.router.add_get("/api/admin/sessions", admin_sessions)
++    app.router.add_get("/api/ping", ping)
++    app.router.add_post("/api/ping", ping)
+     app.router.add_get('/sse', sse_handler)
+ 
+     # ── Local ASR endpoint (SenseVoice/FunASR) ── Issue #604 ──
+diff --git a/server/rtc_manager.py b/server/rtc_manager.py
+index 1c72719..20d2151 100644
+--- a/server/rtc_manager.py
++++ b/server/rtc_manager.py
+@@ -38,6 +38,20 @@ class RTCManager:
+         """
+         self.opt = opt
+         self.pcs: set = set()
++        self.pc_by_session: Dict[str, RTCPeerConnection] = {}
++        # 会话被销毁（含空闲回收）时同步关闭对应的 PeerConnection
++        session_manager.add_cleanup_hook(self._on_session_removed)
++
++    async def _on_session_removed(self, sessionid: str):
++        """会话被销毁时关闭并清理其 PeerConnection"""
++        pc = self.pc_by_session.pop(sessionid, None)
++        if pc is None:
++            return
++        try:
++            await pc.close()
++        except Exception:
++            logger.exception("close pc for session %s error", sessionid)
++        self.pcs.discard(pc)
+ 
+     async def _create_pc_and_answer(self, avatar_session, sessionid, offer):
+         """创建 PeerConnection、添加轨道、SDP 交换，返回已完成 answer 的 pc"""
+@@ -46,6 +60,7 @@ class RTCManager:
+             configuration=RTCConfiguration(iceServers=[ice_server])
+         )
+         self.pcs.add(pc)
++        self.pc_by_session[sessionid] = pc
+ 
+         @pc.on("connectionstatechange")
+         async def on_connectionstatechange():
+@@ -53,6 +68,7 @@ class RTCManager:
+             if pc.connectionState in ("failed", "closed"):
+                 await pc.close()
+                 self.pcs.discard(pc)
++                self.pc_by_session.pop(sessionid, None)
+                 session_manager.remove_session(sessionid)
+ 
+         # 添加发送轨道
+diff --git a/server/session_manager.py b/server/session_manager.py
+index c0389c3..742e368 100644
+--- a/server/session_manager.py
++++ b/server/session_manager.py
+@@ -1,8 +1,10 @@
+ ###############################################################################
+-#  全局会话管理器 (Session Manager)
++# 全局会话管理器 (Session Manager)
+ ###############################################################################
+ 
+ import asyncio
++import inspect
++import time
+ import uuid
+ from typing import Dict, Optional
+ from utils.logger import logger
+@@ -20,11 +22,12 @@ def _rand_session_id() -> str:
+ class SessionManager:
+     """
+     全局数字人会话管理器。
+-    
++
+     统一管理 avatar_sessions 生命周期，并在脱离 WebRTC 时依然保持服务可用。
++    支持空闲（无心跳）会话自动回收，避免客户端异常断开后会话泄漏。
+     """
+     _instance = None
+-    
++
+     def __new__(cls, *args, **kwargs):
+         if cls._instance is None:
+             cls._instance = super().__new__(cls)
+@@ -33,6 +36,8 @@ class SessionManager:
+     def __init__(self):
+         if not hasattr(self, "initialized"):
+             self.sessions: Dict[str, BaseAvatar] = {}
++            self.last_active: Dict[str, float] = {}   # sessionid -> 最后一次心跳时间戳
++            self.cleanup_hooks = []                   # 会话销毁回调（如关闭 PeerConnection）
+             self.build_session_fn = None
+             self.max_session = 1   # default, override via set_max_session()
+             self.initialized = True
+@@ -44,7 +49,12 @@ class SessionManager:
+     def init_builder(self, build_session_fn):
+         """配置用于构建 avatar_session 的工厂函数"""
+         self.build_session_fn = build_session_fn
+-        
++
++    def add_cleanup_hook(self, fn):
++        """注册会话销毁回调，fn(sessionid)，可为协程函数"""
++        if fn not in self.cleanup_hooks:
++            self.cleanup_hooks.append(fn)
++
+     def get_session(self, sessionid: str) -> Optional[BaseAvatar]:
+         """获取已存活的会话"""
+         return self.sessions.get(sessionid)
+@@ -52,7 +62,20 @@ class SessionManager:
+     def has_session(self, sessionid: str) -> bool:
+         """检查会话是否存在"""
+         return sessionid in self.sessions and self.sessions[sessionid] is not None
+-        
++
++    def touch(self, sessionid: str):
++        """刷新心跳时间戳：任何来自该客户端的有效请求都应调用"""
++        if not sessionid:
++            return
++        self.last_active[str(sessionid)] = time.time()
++
++    def get_idle_seconds(self, sessionid: str) -> Optional[float]:
++        """返回会话空闲秒数；未知会话返回 None"""
++        ts = self.last_active.get(str(sessionid))
++        if ts is None:
++            return None
++        return time.time() - ts
++
+     async def create_session(self, params: dict, sessionid: str = None) -> str:
+         """
+         在异步环境中创建一个新会话
+@@ -60,10 +83,10 @@ class SessionManager:
+         """
+         if self.build_session_fn is None:
+             raise Exception("SessionManager builder not initialized")
+-            
++
+         if sessionid is None:
+             sessionid = _rand_session_id()
+-            
++
+         # 检查是否达到最大会话数
+         active_count = sum(1 for s in self.sessions.values() if s is not None)
+         if active_count >= self.max_session:
+@@ -71,32 +94,74 @@ class SessionManager:
+                 f"Maximum session limit reached ({active_count}/{self.max_session})"
+             )
+ 
+-        logger.info('Creating sessionid=%s, current session num=%d', sessionid, active_count)
++        logger.info("Creating sessionid=%s, current session num=%d", sessionid, active_count)
+         # 预先占位防止重复
+         self.sessions[sessionid] = None
++        self.last_active[sessionid] = time.time()
+ 
+         # 在线程池中构建 session（加载模型非常耗时）
+         avatar_session = await asyncio.get_event_loop().run_in_executor(
+             None, self.build_session_fn, sessionid, params
+         )
+         self.sessions[sessionid] = avatar_session
++        self.last_active[sessionid] = time.time()
+         return sessionid
+-        
++
+     def add_session(self, sessionid: str, avatar_session: BaseAvatar):
+         """同步添加静态或外部管理的会话（供非服务端入口调用）"""
+         self.sessions[sessionid] = avatar_session
+-        
++        self.last_active[sessionid] = time.time()
++
+     def remove_session(self, sessionid: str):
+         """销毁会话资源：置位 quit_event，级联停掉 render/推理/合帧/TTS 线程"""
+         if sessionid in self.sessions:
+-            logger.info(f"Removing session {sessionid}")
++            logger.info("Removing session %s", sessionid)
+             avatar_session = self.sessions.pop(sessionid, None)
++            self.last_active.pop(sessionid, None)
+             try:
+-                if avatar_session is not None and getattr(avatar_session, 'quit_event', None) is not None:
++                if avatar_session is not None and getattr(avatar_session, "quit_event", None) is not None:
+                     avatar_session.flush_talk()
+                     avatar_session.quit_event.set()
+             except Exception:
+-                logger.exception(f"session {sessionid} cleanup error")
++                logger.exception("session %s cleanup error", sessionid)
++            # 触发外部清理回调（如关闭该会话的 PeerConnection）
++            for hook in self.cleanup_hooks:
++                try:
++                    result = hook(sessionid)
++                    if inspect.isawaitable(result):
++                        asyncio.get_event_loop().create_task(result)
++                except Exception:
++                    logger.exception("session %s cleanup hook error", sessionid)
++
++    async def start_idle_reaper(self, timeout: int, interval: int = 30):
++        """
++        空闲会话回收协程：超过 timeout 秒没有任何心跳的会话会被销毁。
++
++        timeout <= 0 时不回收；interval 为扫描间隔（秒）。
++        """
++        if timeout <= 0:
++            logger.info("Idle session reaper disabled (session_timeout=%s)", timeout)
++            return
++        logger.info("Idle session reaper started: timeout=%ss, interval=%ss", timeout, interval)
++        while True:
++            await asyncio.sleep(interval)
++            try:
++                now = time.time()
++                for sid in list(self.sessions.keys()):
++                    if self.sessions.get(sid) is None:
++                        continue  # 仍在构建中，跳过
++                    ts = self.last_active.get(sid)
++                    if ts is None:
++                        self.last_active[sid] = now
++                        continue
++                    idle = now - ts
++                    if idle > timeout:
++                        logger.info(
++                            "Reaping idle session %s (idle %.0fs > %ss)", sid, idle, timeout
++                        )
++                        self.remove_session(sid)
++            except Exception:
++                logger.exception("idle session reaper error")
+ 
+ # 单例抛出
+ session_manager = SessionManager()
+diff --git a/web/client.js b/web/client.js
+index 8a51113..9e5b5ee 100644
+--- a/web/client.js
++++ b/web/client.js
+@@ -1,5 +1,21 @@
+ var pc = null;
+ 
++var heartbeatTimer = null;
++
++function startHeartbeat(sessionid) {
++    stopHeartbeat();
++    if (!sessionid) { return; }
++    // 每 30s 心跳一次，服务端 --session_timeout 秒无心跳即回收会话
++    heartbeatTimer = setInterval(function () {
++        fetch("/api/ping?sessionid=" + encodeURIComponent(sessionid), { method: "GET" })
++            .catch(function (err) { console.warn("heartbeat failed", err); });
++    }, 30000);
++}
++
++function stopHeartbeat() {
++    if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
++}
++
+ function negotiate() {
+     pc.addTransceiver('video', { direction: 'recvonly' });
+     pc.addTransceiver('audio', { direction: 'recvonly' });
+@@ -36,6 +52,7 @@ function negotiate() {
+         return response.json();
+     }).then((answer) => {
+         document.getElementById('sessionid').value = answer.sessionid
++        startHeartbeat(answer.sessionid);
+         return pc.setRemoteDescription(answer);
+     }).catch((e) => {
+         alert(e);
+@@ -69,6 +86,7 @@ function start() {
+ 
+ function stop() {
+     document.getElementById('stop').style.display = 'none';
++    stopHeartbeat();
+ 
+     // close peer connection
+     setTimeout(() => {

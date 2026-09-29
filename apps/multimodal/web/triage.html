@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <title>智能预问诊 · 数字人问诊台</title>
+    <link rel="stylesheet" href="triage.css" />
+</head>
+<body>
+<div class="app">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <div class="brand-text">
+                <strong>智能预问诊</strong>
+                <span>数字人语音问诊 · 信息采集与整理</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <a class="icon-btn" href="doctor.html" title="查看进行中的会话与预问诊总结">医生工作台</a>
+            <span class="conn-pill" id="conn-pill" data-state="off">未连接</span>
+            <button type="button" class="icon-btn" id="reconnect-btn" title="重新连接数字人" hidden>重新连接</button>
+        </div>
+    </header>
+
+    <main class="layout">
+        <!-- 左：数字人 + 麦克风控制 -->
+        <section class="stage" aria-label="数字人">
+            <div class="video-shell" id="video-shell">
+                <video id="avatar-video" autoplay playsinline></video>
+                <audio id="avatar-audio" autoplay></audio>
+
+                <div class="phase-badge" id="phase-badge" data-phase="idle">
+                    <i class="dot"></i><span id="phase-text">未开始</span>
+                </div>
+
+                <div class="caption" id="caption" hidden></div>
+                <div class="toast" id="toast" hidden></div>
+
+                <div class="overlay" id="overlay">
+                    <div class="overlay-card">
+                        <h1>准备开始预问诊</h1>
+                        <p>点击「开始问诊」后将自动连接数字人并开启麦克风，之后您只需正常说话，系统会自动断句并逐轮提问。</p>
+                        <ul class="overlay-list">
+                            <li>语音与对话内容仅在本机（DGX Spark）内处理，不上传云端</li>
+                            <li>原始录音默认不落盘</li>
+                            <li>也可以随时改用右侧文字输入</li>
+                        </ul>
+                        <p class="overlay-note" id="overlay-note">首次使用请在浏览器弹出提示时允许使用麦克风。</p>
+                        <button type="button" class="primary-btn" id="start-btn">开始问诊</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mic-bar">
+                <button type="button" class="mic-btn" id="mic-btn" disabled
+                        aria-label="开始或暂停语音输入" title="开始 / 暂停语音输入">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" />
+                        <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2"
+                              stroke-linecap="round" />
+                        <path d="M12 18v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <span class="mic-btn-label" id="mic-btn-label">开始问诊</span>
+                </button>
+
+                <div class="mic-info">
+                    <div class="mic-title" id="mic-title">麦克风未开启</div>
+                    <div class="mic-sub" id="mic-sub">点击「开始问诊」后自动开启语音交互</div>
+                    <div class="level" aria-hidden="true"><i id="level-bar"></i></div>
+                    <div class="level-num" id="level-num">电平 —</div>
+                </div>
+            </div>
+
+            <p class="disclaimer">
+                本工具仅用于预问诊信息采集与整理，不构成诊断，也不能替代医生；如出现剧烈胸痛、呼吸困难、
+                意识障碍、大出血等情况请立即拨打急救电话。
+            </p>
+        </section>
+
+        <!-- 右：文字对话 -->
+        <section class="chat" aria-label="对话记录">
+            <div class="chat-head">
+                <h2>对话记录</h2>
+                <span class="chat-meta" id="chat-meta">等待开始</span>
+            </div>
+
+            <div class="chat-list" id="chat-list" role="log" aria-live="polite"></div>
+
+            <div class="chat-compose">
+                <textarea id="chat-input" rows="1" placeholder="也可以直接打字，回车发送（Shift+回车换行）" disabled></textarea>
+                <button type="button" class="primary-btn compact" id="send-btn" disabled>发送</button>
+            </div>
+
+            <div class="chat-actions">
+                <button type="button" class="outline-btn" id="finish-btn" disabled>结束问诊并生成小结</button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- 小结全屏查看 -->
+<div class="modal" id="summary-modal" hidden>
+    <div class="modal-card">
+        <div class="modal-head">
+            <h2>预问诊小结</h2>
+            <button type="button" class="icon-btn" id="summary-close-btn">关闭</button>
+        </div>
+        <div class="modal-body" id="summary-modal-body"></div>
+        <p class="disclaimer">
+            以上内容由预问诊系统自动整理，仅供医生参考，不构成诊断或治疗建议。
+        </p>
+    </div>
+</div>
+
+<script src="asr/recorder-core.js" charset="UTF-8"></script>
+<script src="asr/pcm.js" charset="UTF-8"></script>
+<script src="mic-asr.js" charset="UTF-8"></script>
+<script src="triage.js" charset="UTF-8"></script>
+</body>
+</html>

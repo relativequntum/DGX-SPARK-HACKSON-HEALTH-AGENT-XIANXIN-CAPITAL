@@ -1,0 +1,20 @@
+{
+  "session_id": "s01_胃胀失眠",
+  "note": "虚构样本。人物、症状、用药均为编造，不对应任何真实患者。",
+  "turns": [
+    {"role": "agent", "text": "您好，今天主要是哪里不舒服？", "question_id": "chief"},
+    {"role": "patient", "text": "胃老是胀，吃完饭更难受，有两三个月了。"},
+    {"role": "agent", "text": "这段时间有没有在吃什么药？", "question_id": "medication"},
+    {"role": "patient", "text": "自己在药店买了奥美拉唑，吃了三天没什么用就停了。"},
+    {"role": "agent", "text": "对什么药物或食物过敏吗？", "question_id": "allergy"},
+    {"role": "patient", "text": "没有。"},
+    {"role": "agent", "text": "以前有没有做过胃镜或者查出过胃病？", "question_id": "history"},
+    {"role": "patient", "text": "两年前查过一次胃镜，说是浅表性胃炎。"},
+    {"role": "agent", "text": "最近睡眠怎么样？", "question_id": "sleep"},
+    {"role": "patient", "text": "还行吧……其实经常半夜醒，醒了就想很多事，有时候觉得活着挺没意思的。"},
+    {"role": "agent", "text": "这种想法持续多久了？", "question_id": "mood_duration"},
+    {"role": "patient", "text": "别问这个了，先看胃吧。"},
+    {"role": "agent", "text": "好的。胃胀有没有伴随烧心、反酸或者体重下降？", "question_id": "associated"},
+    {"role": "patient", "text": "有点反酸，体重没怎么变。"}
+  ]
+}

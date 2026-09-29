@@ -1,0 +1,14 @@
+# 阶段三输出浏览（judge 医生视图 / face_body 报告与演示视频）。只监听 127.0.0.1，经 SSH 隧道访问。
+# setup_spark.sh 会把 @PORT@ / @DIR@ 换成 spark.env 里的值，装到 ~/.config/systemd/user/。
+[Unit]
+Description=Phase-3 emotion outputs viewer (127.0.0.1:@PORT@)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m http.server @PORT@ --bind 127.0.0.1 --directory @DIR@
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,18 @@
+{
+  "session_id": "s04_平稳对照",
+  "note": "虚构样本。对照组：配合、平稳、信息具体，只应命中主诉与用药，不应有风险或情绪命中。",
+  "turns": [
+    {"role": "agent", "text": "您好，今天主要是哪里不舒服？", "question_id": "chief"},
+    {"role": "patient", "text": "感冒了，前天开始流鼻涕、嗓子疼，今天有点咳嗽。"},
+    {"role": "agent", "text": "有没有发烧？量过体温吗？", "question_id": "fever"},
+    {"role": "patient", "text": "昨晚量了 37.8，吃了退烧药今天早上 37.2。"},
+    {"role": "agent", "text": "吃的是什么退烧药？", "question_id": "medication"},
+    {"role": "patient", "text": "对乙酰氨基酚，昨晚吃了一片 500 毫克。"},
+    {"role": "agent", "text": "对什么药物过敏吗？", "question_id": "allergy"},
+    {"role": "patient", "text": "没有。"},
+    {"role": "agent", "text": "最近睡眠和胃口怎么样？", "question_id": "sleep"},
+    {"role": "patient", "text": "睡得还可以，胃口差一点，喝了粥。"},
+    {"role": "agent", "text": "好的，还有什么想补充的吗？", "question_id": "extra"},
+    {"role": "patient", "text": "没有了，谢谢。"}
+  ]
+}

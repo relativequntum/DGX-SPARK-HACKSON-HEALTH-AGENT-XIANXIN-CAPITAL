@@ -1,0 +1,7 @@
+# Phase-3 emotion modules on DGX Spark (aarch64, Python 3.12). ASCII only.
+mediapipe==1.0.1   # face_body; pulls opencv-contrib-python. Do NOT also install opencv-python-headless: both ship cv2
+numpy
+pillow             # face_body annotate panel
+imageio-ffmpeg     # face_body annotate: H.264 for browsers (Spark has no system ffmpeg)
+openai             # judge --backend openai (phase-2 llama-server)
+pytest

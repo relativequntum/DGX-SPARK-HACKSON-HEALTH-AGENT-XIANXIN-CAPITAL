@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <title>智能预问诊 · 医生工作台</title>
+    <link rel="stylesheet" href="doctor.css" />
+</head>
+<body>
+<div class="app">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <div class="brand-text">
+                <strong>智能预问诊 · 医生工作台</strong>
+                <span>查看进行中的会话、文字版对话、预问诊总结与重点提示</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <label class="switch" title="每 5 秒自动刷新一次列表与当前会话">
+                <input type="checkbox" id="auto-chk" checked />
+                <span>自动刷新</span>
+            </label>
+            <span class="conn-pill" id="conn-pill" data-state="busy">加载中</span>
+            <button type="button" class="icon-btn" id="refresh-btn">刷新</button>
+        </div>
+    </header>
+
+    <main class="layout">
+        <!-- 左：会话列表 -->
+        <section class="side" aria-label="问诊会话列表">
+            <div class="side-head">
+                <h2>问诊会话</h2>
+                <span class="side-meta" id="list-meta">—</span>
+            </div>
+
+            <input class="search" id="q" type="search" placeholder="搜索会话编号或内容" />
+
+            <div class="chips" id="chips">
+                <button type="button" class="chip is-on" data-status="">全部</button>
+                <button type="button" class="chip" data-status="live">正在进行</button>
+                <button type="button" class="chip" data-status="ended">已出总结</button>
+                <button type="button" class="chip" data-status="stale">中断未结</button>
+            </div>
+
+            <ul class="list" id="list"></ul>
+        </section>
+
+        <!-- 右：会话详情 -->
+        <section class="detail" aria-label="会话详情">
+            <div class="detail-empty" id="empty">
+                <h2>选择一个会话</h2>
+                <p>左侧列表中正在进行或已完成的问诊会话，点开即可查看文字版对话内容；问诊结束后这里会出现给医生看的预问诊总结。</p>
+            </div>
+
+            <div class="detail-body" id="detail" hidden>
+                <header class="detail-head">
+                    <div class="detail-title">
+                        <h2 id="d-title">会话</h2>
+                        <span class="detail-sub" id="d-sub"></span>
+                    </div>
+                    <span class="badge" id="d-status"></span>
+                </header>
+
+                <div class="meta-row" id="d-meta"></div>
+
+                <div class="tabs" id="tabs">
+                    <button type="button" class="tab is-on" data-tab="chat">对话记录</button>
+                    <button type="button" class="tab" data-tab="summary">预问诊总结<span class="tab-dot" id="sum-dot" hidden></span></button>
+                    <button type="button" class="tab" data-tab="highlights" title="阶段三标出的值得先看的患者回答">重点<span class="tab-dot" id="hl-dot" hidden></span></button>
+                </div>
+
+                <div class="pane" id="pane-chat">
+                    <ol class="chat" id="chat"></ol>
+                    <p class="pane-hint" id="chat-end" hidden></p>
+                </div>
+
+                <div class="pane" id="pane-summary" hidden>
+                    <div class="pane-bar">
+                        <span class="pane-meta" id="sum-meta"></span>
+                        <button type="button" class="icon-btn" id="copy-btn" hidden>复制医生版总结</button>
+                    </div>
+                    <div class="md" id="sum-body"></div>
+                    <details class="fold" id="patient-fold" hidden>
+                        <summary>患者核对版（患者端看到的内容）</summary>
+                        <div class="md muted" id="patient-body"></div>
+                    </details>
+                </div>
+
+                <div class="pane" id="pane-highlights" hidden>
+                    <div class="pane-bar">
+                        <span class="pane-meta" id="hl-meta"></span>
+                    </div>
+                    <p class="hl-notice" id="hl-notice" hidden></p>
+                    <ol class="hl-list" id="hl-list"></ol>
+                </div>
+            </div>
+
+            <p class="disclaimer">
+                本页内容由预问诊系统自动整理，仅供医生参考，<strong>不构成诊断或治疗建议</strong>；
+                所有信息需经医生当面核实后方可采用。患者信息仅在本机（DGX Spark）处理，请勿对外转发。
+            </p>
+        </section>
+    </main>
+</div>
+
+<script src="doctor.js" charset="UTF-8"></script>
+</body>
+</html>

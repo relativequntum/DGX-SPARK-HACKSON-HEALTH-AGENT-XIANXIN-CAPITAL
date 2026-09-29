@@ -1,0 +1,18 @@
+{
+  "session_id": "s03_焦虑回避",
+  "note": "虚构样本。考察：极简回答、回避、求安心、希望停止。医疗信息少。",
+  "turns": [
+    {"role": "agent", "text": "您好，今天想聊聊哪方面的困扰？", "question_id": "chief"},
+    {"role": "patient", "text": "就是……最近状态不太好。"},
+    {"role": "agent", "text": "能具体说说是哪种不好吗？比如睡眠、胃口、精力？", "question_id": "detail"},
+    {"role": "patient", "text": "都还好。"},
+    {"role": "agent", "text": "这种状态持续多久了？", "question_id": "duration"},
+    {"role": "patient", "text": "不记得了，反正挺久了。"},
+    {"role": "agent", "text": "最近工作或者家里有没有什么变化？", "question_id": "stress"},
+    {"role": "patient", "text": "这个跟看病有关系吗？我只是想知道我是不是有什么病。"},
+    {"role": "agent", "text": "这些信息可以帮医生更全面地了解情况。您最近有没有心慌、手抖、出汗这类感觉？", "question_id": "somatic"},
+    {"role": "patient", "text": "有，开会的时候心跳特别快，手心全是汗，我是不是心脏有问题？很严重吗？"},
+    {"role": "agent", "text": "这个需要医生当面评估。您以前有没有做过心电图？", "question_id": "history"},
+    {"role": "patient", "text": "做过，说没事。可以先到这吧，我有点累了。"}
+  ]
+}

@@ -1,0 +1,4 @@
+# Spark 上用 bash 执行：Windows 开发机的 core.autocrlf 不能把它们转成 CRLF
+*.sh      text eol=lf
+*.env     text eol=lf
+*.service text eol=lf

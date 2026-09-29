@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 医疗或隐私敏感问题
+    url: https://github.com/relativequntum/spark-Hackson/security
+    about: 不要在公开 Issue 中提交真实患者数据、密钥或敏感漏洞细节。

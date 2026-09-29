@@ -1,0 +1,16 @@
+# 阶段三 judge 自动判断：问诊结束后、大模型空闲时判断，结果给阶段二医生控制台的「重点」页签。只用本地模型。
+# setup_spark.sh 会把 @EMOTION_HOME@ / @DEPLOY_DIR@ 换成实际路径，装到 ~/.config/systemd/user/。
+# ExecStart 里的 $$ 是 systemd 的转义：传给 bash 的是字面量 $，变量由 spark.env 提供（含它先读的 ~/.config/emotion/spark.local.env；改了要重启服务）。
+[Unit]
+Description=Phase-3 judge: auto-judge finished consultations for the doctor console (local LLM only)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=@EMOTION_HOME@
+ExecStart=/bin/bash -c 'source "@DEPLOY_DIR@/spark.env" && exec "$${EMOTION_VENV}/bin/python" -u -m apps.emotion.judge.watch'
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=default.target

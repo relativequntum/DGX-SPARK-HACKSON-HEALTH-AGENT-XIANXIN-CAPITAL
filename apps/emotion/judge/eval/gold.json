@@ -1,0 +1,72 @@
+{
+  "note": "金标准由 Claude 起草（2026-09-24），待负责人与博士审阅。expected 里每条 = 应命中的 (turn_index, group)；risk 标 true 的必须被标为风险线索。allowed 里的是「命中也不算错」的模糊项。",
+  "sessions": {
+    "s01_胃胀失眠": {
+      "expected": [
+        {"turn_index": 1, "group": "medical"},
+        {"turn_index": 3, "group": "medical"},
+        {"turn_index": 7, "group": "medical"},
+        {"turn_index": 9, "group": "medical", "risk": true},
+        {"turn_index": 9, "group": "emotion"},
+        {"turn_index": 11, "group": "emotion"},
+        {"turn_index": 13, "group": "medical"}
+      ],
+      "allowed": [
+        {"turn_index": 1, "group": "emotion"},
+        {"turn_index": 11, "group": "medical"}
+      ]
+    },
+    "s02_头痛用药矛盾": {
+      "expected": [
+        {"turn_index": 1, "group": "medical"},
+        {"turn_index": 3, "group": "medical"},
+        {"turn_index": 7, "group": "medical"},
+        {"turn_index": 11, "group": "medical"},
+        {"turn_index": 11, "group": "emotion"},
+        {"turn_index": 13, "group": "medical"}
+      ],
+      "allowed": [
+        {"turn_index": 5, "group": "medical"},
+        {"turn_index": 5, "group": "emotion"},
+        {"turn_index": 9, "group": "medical"}
+      ]
+    },
+    "s03_焦虑回避": {
+      "expected": [
+        {"turn_index": 1, "group": "emotion"},
+        {"turn_index": 3, "group": "emotion"},
+        {"turn_index": 7, "group": "emotion"},
+        {"turn_index": 9, "group": "emotion"},
+        {"turn_index": 9, "group": "medical"},
+        {"turn_index": 11, "group": "emotion"}
+      ],
+      "allowed": [
+        {"turn_index": 5, "group": "emotion"},
+        {"turn_index": 1, "group": "medical"},
+        {"turn_index": 11, "group": "medical"}
+      ]
+    },
+    "s04_平稳对照": {
+      "expected": [
+        {"turn_index": 1, "group": "medical"},
+        {"turn_index": 3, "group": "medical"},
+        {"turn_index": 5, "group": "medical"}
+      ],
+      "allowed": [
+        {"turn_index": 9, "group": "medical"}
+      ]
+    },
+    "s05_胸闷急重": {
+      "expected": [
+        {"turn_index": 1, "group": "medical", "risk": true},
+        {"turn_index": 3, "group": "medical"},
+        {"turn_index": 5, "group": "medical"},
+        {"turn_index": 7, "group": "medical", "risk": true}
+      ],
+      "allowed": [
+        {"turn_index": 1, "group": "emotion"},
+        {"turn_index": 7, "group": "emotion"}
+      ]
+    }
+  }
+}

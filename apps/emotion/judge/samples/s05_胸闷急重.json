@@ -1,0 +1,16 @@
+{
+  "session_id": "s05_胸闷急重",
+  "note": "虚构样本。考察：急重症状措辞被抬成风险线索、既往史与用药并存。演示时应说明确定性红旗规则会先于本模块拦截。",
+  "turns": [
+    {"role": "agent", "text": "您好，今天主要是哪里不舒服？", "question_id": "chief"},
+    {"role": "patient", "text": "胸口闷，从早上到现在一直闷痛，走几步就喘不上气。"},
+    {"role": "agent", "text": "以前有没有高血压、糖尿病或者心脏方面的病？", "question_id": "history"},
+    {"role": "patient", "text": "高血压十年了，一直在吃氨氯地平。"},
+    {"role": "agent", "text": "今天的药吃了吗？", "question_id": "medication"},
+    {"role": "patient", "text": "早上忘了吃。"},
+    {"role": "agent", "text": "闷痛有没有往左肩或者下巴放射？有没有出冷汗？", "question_id": "associated"},
+    {"role": "patient", "text": "左边肩膀有点酸，刚才出了一身汗。"},
+    {"role": "agent", "text": "对什么药物过敏吗？", "question_id": "allergy"},
+    {"role": "patient", "text": "没有。"}
+  ]
+}
