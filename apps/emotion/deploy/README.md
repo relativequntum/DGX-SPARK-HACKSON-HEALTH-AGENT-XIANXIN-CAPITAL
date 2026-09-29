@@ -114,6 +114,10 @@ $PY -m apps.emotion.face_body annotate <视频.mp4> --out-dir "$EMOTION_OUT/face
 - 每发一次请求前，先等 llama-server 空闲、数字人没有在线会话，最多等 10 分钟，不和实时问诊抢唯一的并发槽；
 - 结果写到 `outputs/judge/consult/<会话>.judge.json`，医生控制台（8110）的「重点」页签读它，点一条跳回对话原句；
 - 只用本地模型；日志只有会话编号前 8 位和命中数：`journalctl --user -u emotion-judge-watch -f`。
+- 同一个服务还做**同期观察**：患者开了摄像头观察的会话（`EMOTION_OBS_DIR`，默认 `~/livetalking-logs/observations/<会话>.frames.jsonl`，
+  由阶段二医生端服务写入，与阶段二 `env.sh` 的 `DOCTOR_OBS_DIR` 必须相同），结束后先用 `face_body/live.py` 生成
+  `outputs/judge/consult/<会话>.observe.json`——只算数值，不用大模型、不等模型空闲；frames 或问诊记录更新了会重算；
+  出错只记异常类名，不影响 judge。
 
 ## 注意
 

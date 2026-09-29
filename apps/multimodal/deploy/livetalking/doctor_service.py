@@ -14,16 +14,21 @@
     GET  /api/doctor/sessions         会话列表（筛选 status / 关键词 q）
     GET  /api/doctor/sessions/<id>    单个会话：HEADER 元信息 + messages + summary
     GET  /api/doctor/sessions/<id>/highlights
-                                      阶段三 judge 标出的「重点」（只读；还没生成时 ready=false）
+                                      阶段三 judge 标出的「重点」（只读；还没生成时 ready=false），
+                                      并附每条患者回答的摄像头同期观察（observe_segments）
+    POST /api/observe/<id>            患者页「摄像头观察」上传的关键点数值（唯一的写接口；DOCTOR_OBSERVE=0 关闭）
 
-安全边界：只读本机磁盘与回环接口；不做任何诊断判断，也不修改问诊内容。
+安全边界：除 /api/observe 追加写关键点数值外只读本机磁盘与回环接口；不存图像，不做任何诊断判断，也不修改问诊内容。
 """
 import json
+import math
 import os
+import re
+import threading
 import time
 import urllib.request
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -42,6 +47,32 @@ JUDGE_DIR = os.path.expanduser(
     os.getenv("DOCTOR_JUDGE_DIR", "~/spark-Hackson/outputs/judge/consult"))
 _HIT_FIELDS = ("t", "turn_index", "text", "question", "group", "group_label",
                "importance", "risk", "labels", "evidence", "source")
+# 摄像头观察：患者页只上传关键点数值（blendshape 分数、头姿矩阵、姿态点），追加写到这里；
+# 阶段三 emotion-judge-watch 在问诊结束后读它，生成 <JUDGE_DIR>/<会话>.observe.json
+OBS_DIR = os.path.expanduser(os.getenv("DOCTOR_OBS_DIR", "~/livetalking-logs/observations"))
+OBS_MAX_BODY = 64 * 1024            # 一批请求体上限（约 2 秒、10 帧，实际十几 KB）
+OBS_MAX_FRAMES = 50                 # 一批最多帧数
+OBS_MAX_FILE = 20 * 1024 * 1024     # 单个会话的 frames 文件上限，超过返回 413
+OBS_MAX_TOTAL = 2 * 1024 * 1024 * 1024   # 观察目录所有会话合计上限：换着会话编号发也写不满 Spark 的磁盘
+OBS_MAX_AGE_MS = 60_000             # 一帧的采集时刻最多比发送时刻早 60 秒（只用浏览器时钟的差值，不怕两边时钟不齐）
+# 与 apps/emotion/face_body/live.py、apps/multimodal/web/camera-metrics.js 三处一致（有测试核对）；
+# 本服务的 venv 没有 numpy，不能 import 阶段三，所以复制一份
+CAM_BLENDSHAPES = (
+    "eyeLookOutLeft", "eyeLookOutRight", "eyeLookInLeft", "eyeLookInRight",
+    "eyeLookUpLeft", "eyeLookUpRight", "eyeLookDownLeft", "eyeLookDownRight",
+    "eyeBlinkLeft", "eyeBlinkRight",
+    "browInnerUp", "browOuterUpLeft", "browOuterUpRight", "browDownLeft", "browDownRight",
+    "cheekSquintLeft", "cheekSquintRight", "eyeSquintLeft", "eyeSquintRight",
+    "mouthSmileLeft", "mouthSmileRight", "mouthFrownLeft", "mouthFrownRight",
+    "mouthPressLeft", "mouthPressRight", "jawOpen",
+)
+_CAM_SET = frozenset(CAM_BLENDSHAPES)
+_SID_RE = re.compile(r"[A-Za-z0-9_-]{8,64}")   # 与 consult_recorder._safe_sid 同一规则：文件名与问诊记录对齐
+_OBS_FIELDS = ("t", "interval", "frames", "face_status", "body_status", "gaze_away_ratio", "blink_count",
+               "blink_per_min", "head_motion_deg_per_frame", "hand_face_ratio", "body_motion_x1000")
+_OBS_MEDIAN_KEYS = ("gaze_away_ratio", "blink_per_min", "head_motion_deg_per_frame",
+                    "hand_face_ratio", "body_motion_x1000")
+_OBS_LOCK = threading.Lock()
 
 _LT_CACHE = {"at": 0.0, "data": {}}
 app = FastAPI(title="doctor-console")
@@ -50,8 +81,8 @@ app = FastAPI(title="doctor-console")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],   # POST 只有 /api/observe：患者页（8010）跨端口上传关键点数值
+    allow_headers=["*"],             # 含 Content-Type（application/json 会触发预检）
 )
 
 
@@ -74,6 +105,11 @@ def _web_dir() -> str:
 
 def _recorder_disabled() -> bool:
     return os.getenv("DOCTOR_RECORD", "1") == "0"
+
+
+def _observe_enabled() -> bool:
+    """总开关：DOCTOR_OBSERVE=0 时不收摄像头观察数据（接口 404，患者页按上传失败处理，问诊不受影响）。"""
+    return os.getenv("DOCTOR_OBSERVE", "1") != "0"
 
 
 def _iter_session_files():
@@ -190,6 +226,9 @@ def health():
         "web_dir": _WEB_DIR_CACHE[0] or "(未指定)",
         "judge_dir": JUDGE_DIR,
         "judge_dir_exists": os.path.isdir(JUDGE_DIR),
+        "obs_dir": OBS_DIR,
+        "obs_dir_exists": os.path.isdir(OBS_DIR),
+        "observe_enabled": _observe_enabled(),
         "live_talking_reachable": bool(_lt_sessions()),
     }
 
@@ -264,19 +303,22 @@ def get_highlights(sid: str):
     """
     if "/" in sid or "\\" in sid or sid.startswith("."):
         raise HTTPException(400, "非法会话标识")
+    obs = _observe_payload(sid)   # 同期观察可能比 judge 先出来：judge 还没好时也照常带上
     path = os.path.join(JUDGE_DIR, "%s.judge.json" % sid)
     if not os.path.isfile(path):
-        return {"ready": False, "hits": []}
+        return dict({"ready": False, "hits": []}, **obs)
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except (OSError, ValueError):
-        return {"ready": False, "hits": [], "error": "重点结果暂时读不了"}
+        return dict({"ready": False, "hits": [], "error": "重点结果暂时读不了"}, **obs)
     record = os.path.join(RECORD_DIR, "%s.jsonl" % sid)
     stale = os.path.isfile(record) and os.path.getmtime(record) > os.path.getmtime(path)
     hits = [{k: h.get(k) for k in _HIT_FIELDS}
             for h in (data.get("hits") or []) if isinstance(h, dict)]
-    return {
+    for h in hits:  # 每条命中附上同一句回答的同期观察（按问诊记录的事件时间 t 对齐）
+        h["observe"] = _match_segment(h.get("t"), obs["observe_segments"])
+    return dict({
         "ready": True,
         "stale": stale,
         "hits": hits,
@@ -284,7 +326,147 @@ def get_highlights(sid: str):
         "review_notice": data.get("review_notice") or "",
         "schema_version": data.get("schema_version") or "",
         "errors": data.get("errors") or 0,
+    }, **obs)
+
+
+def _num(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def _observe_payload(sid: str) -> dict:
+    """<JUDGE_DIR>/<sid>.observe.json → 白名单字段；camera = 这场开过摄像头（有 frames，或 observe 里有帧）。"""
+    data = None
+    try:
+        with open(os.path.join(JUDGE_DIR, "%s.observe.json" % sid), encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        data = None
+    if not isinstance(data, dict):
+        data = None
+    segments = [{k: s.get(k) for k in _OBS_FIELDS}
+                for s in ((data or {}).get("segments") or []) if isinstance(s, dict) and _num(s.get("t"))]
+    medians = (data or {}).get("medians")
+    medians = medians if isinstance(medians, dict) else {}
+    frames = os.path.join(OBS_DIR, "%s.frames.jsonl" % sid)
+    return {
+        "camera": os.path.isfile(frames) or bool(data and _num(data.get("camera_frames"))
+                                                  and data["camera_frames"] > 0),
+        "observe_ready": data is not None,
+        "observe_segments": segments,
+        "observe_medians": {k: medians.get(k) for k in _OBS_MEDIAN_KEYS},
     }
+
+
+def _match_segment(t, segments):
+    if not _num(t):
+        return None
+    for seg in segments:
+        if abs(seg["t"] - t) < 0.5:
+            return seg
+    return None
+
+
+def _check_frame(fr) -> bool:
+    """一帧的白名单校验：{"ct": 毫秒, "f": null | {"bs": {26 个有限数}, "m": [16 个有限数]}, "p": null | 25×[x, y, 可见度]}。"""
+    if not isinstance(fr, dict) or set(fr) - {"ct", "f", "p"} or not _num(fr.get("ct")):
+        return False
+    f, p = fr.get("f"), fr.get("p")
+    if f is not None:
+        if not isinstance(f, dict) or set(f) != {"bs", "m"}:
+            return False
+        bs, m = f["bs"], f["m"]
+        if not isinstance(bs, dict) or set(bs) != _CAM_SET or not all(_num(v) for v in bs.values()):
+            return False
+        if not isinstance(m, list) or len(m) != 16 or not all(_num(v) for v in m):
+            return False
+    if p is not None:
+        if not isinstance(p, list) or len(p) != 25:
+            return False
+        if not all(isinstance(q, list) and len(q) == 3 and all(_num(v) for v in q) for q in p):
+            return False
+    return True
+
+
+async def _read_body(request: Request, limit: int):
+    """读请求体，超过 limit 就停下返回 None：先看 Content-Length，再边读边数，超大请求体不会整个读进内存。"""
+    try:
+        if int(request.headers.get("content-length") or 0) > limit:
+            return None
+    except ValueError:
+        pass
+    buf = bytearray()
+    async for chunk in request.stream():
+        buf += chunk
+        if len(buf) > limit:
+            return None
+    return bytes(buf)
+
+
+def _obs_total() -> int:
+    """观察目录里所有 frames 文件的总字节数。"""
+    total = 0
+    try:
+        with os.scandir(OBS_DIR) as it:
+            for entry in it:
+                if entry.name.endswith(".frames.jsonl") and entry.is_file():
+                    total += entry.stat().st_size
+    except OSError:
+        pass
+    return total
+
+
+@app.post("/api/observe/{sid}")
+async def observe(sid: str, request: Request):
+    """患者页摄像头观察的一批关键点数值 → 追加写 <OBS_DIR>/<sid>.frames.jsonl（目录 700、文件 600）。
+
+    整批校验，任何一处不合格整批丢弃（400）；时间换成服务器秒：t = 收到时刻 - (sent_ct - ct) / 1000，
+    只用浏览器时钟的差值，两边时钟差多少都不影响。不存图像，也不保存浏览器时间 ct。"""
+    if not _observe_enabled():
+        raise HTTPException(404, "摄像头观察已关闭")
+    if not _SID_RE.fullmatch(sid or ""):
+        raise HTTPException(400, "非法会话标识")
+    body = await _read_body(request, OBS_MAX_BODY)
+    recv = time.time()
+    if body is None:
+        raise HTTPException(413, "请求体过大")
+    try:
+        data = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        raise HTTPException(400, "不是 JSON")
+    if not isinstance(data, dict) or data.get("v") != "cam-0.1" or not _num(data.get("sent_ct")):
+        raise HTTPException(400, "格式不对")
+    frames = data.get("frames")
+    if not isinstance(frames, list) or not 1 <= len(frames) <= OBS_MAX_FRAMES:
+        raise HTTPException(400, "frames 数量不对")
+    if not all(_check_frame(fr) for fr in frames):
+        raise HTTPException(400, "帧数据不合格")
+    ages = [data["sent_ct"] - fr["ct"] for fr in frames]
+    if not all(0 <= a <= OBS_MAX_AGE_MS for a in ages):
+        raise HTTPException(400, "帧时间不对")
+    lines = "".join(json.dumps({"t": round(recv - a / 1000.0, 3), "f": fr.get("f"), "p": fr.get("p")},
+                               separators=(",", ":")) + "\n" for a, fr in zip(ages, frames)).encode("utf-8")
+    path = os.path.join(OBS_DIR, "%s.frames.jsonl" % sid)
+    with _OBS_LOCK:
+        os.makedirs(OBS_DIR, exist_ok=True)
+        try:
+            os.chmod(OBS_DIR, 0o700)
+        except OSError:
+            pass
+        size = os.path.getsize(path) if os.path.isfile(path) else 0
+        if size + len(lines) > OBS_MAX_FILE:
+            raise HTTPException(413, "本次问诊的观察数据已达上限")
+        if _obs_total() + len(lines) > OBS_MAX_TOTAL:
+            raise HTTPException(413, "观察数据总量已达上限")
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        try:
+            os.write(fd, lines)
+        finally:
+            os.close(fd)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+    return {"ok": True, "accepted": len(frames)}
 
 
 @app.get("/")

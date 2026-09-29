@@ -29,7 +29,7 @@
 阶段二、三已实现，并部署在 DGX Spark 上运行：
 
 - 阶段二（`apps/multimodal/`）：本地数字人、ASR/TTS/LLM，OpenClaw 预问诊 agent（`tcm-preconsultation` Skill），患者端预问诊页与医生工作台；
-- 阶段三（`apps/emotion/`）：问诊结束后的对话重点判断 `judge/`（常驻服务，给医生工作台「重点」页签供数）；面部与身体观察 `face_body/` 目前离线处理视频文件。
+- 阶段三（`apps/emotion/`）：问诊结束后的对话重点判断 `judge/`（常驻服务，给医生工作台「重点」页签供数）；面部与身体观察 `face_body/` 离线处理视频文件，也统计患者页可选摄像头观察的关键点数值（问诊结束后给医生工作台逐条回答的同期观察）。
 
 阶段一（`apps/text_triage/`）仍是预留目录，文字预问诊暂由上述 OpenClaw agent 与 Skill 承担，患者页可全程打字。确定性红旗规则层已有设计（见 [医疗安全与隐私](safety-and-privacy.md)），尚未实现。具体科室、问题树、接口、数据结构和验收案例仍由各阶段负责人通过 Issue 提案后确定。
 

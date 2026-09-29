@@ -24,6 +24,10 @@
 | `web/doctor.html` | **医生端**：左＝会话列表，右＝文字版对话 / 预问诊总结 |
 | `web/doctor.css` | 医生端样式（与患者端同一套配色变量） |
 | `web/doctor.js` | 会话列表轮询、详情渲染、总结与复制；`?demo=1` 可离线预览 |
+| `web/camera-observe.js` | 患者页「摄像头观察」（可选，默认关闭）：本机打点、小窗与实时面板、每 2 秒上传关键点数值到 `:8110/api/observe/<会话>` |
+| `web/camera-metrics.js` | 摄像头观察的逐帧换算与统计（纯函数，口径照搬 `face_body`，node 可测） |
+| `web/tests/` | node 单元测试与一致性测试、无头 Chrome 冒烟脚本（不部署） |
+| `web/vendor/mediapipe/` | MediaPipe 网页版与模型：`15_setup_camera_assets.sh` 部署时放进 LiveTalking 静态目录，**不进仓库** |
 
 交互流程：
 

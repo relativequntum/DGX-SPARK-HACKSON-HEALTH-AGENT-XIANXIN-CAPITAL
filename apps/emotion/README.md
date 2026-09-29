@@ -5,7 +5,7 @@
 本目录是阶段三的实现，已部署在 DGX Spark 上：
 
 - [`judge/`](judge/README.md)：问诊结束后用本地大模型判断对话文字里值得医生先看的患者回答，常驻服务为医生工作台「重点」页签供数；
-- [`face_body/`](face_body/README.md)：用 MediaPipe 把视频变成按时间窗的面部与身体可观察量，目前离线处理视频文件，尚未接入实时问诊；
+- [`face_body/`](face_body/README.md)：用 MediaPipe 把视频变成按时间窗的面部与身体可观察量，既离线处理视频文件，也统计患者页可选「摄像头观察」上传的关键点数值（`live.py`，问诊结束后按每条回答切段）；
 - [`deploy/`](deploy/README.md)：Spark 部署脚本；`research/`：选型调研与决策记录。
 
 语音情感方向目前没有独立模块（judge 只看文字）。

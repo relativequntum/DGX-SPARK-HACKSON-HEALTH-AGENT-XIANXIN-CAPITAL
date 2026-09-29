@@ -282,3 +282,122 @@ def test_unfinished_result_on_disk_is_judged_again_after_a_restart(tmp_path):
     done = run_once(rec, out, AlwaysAnswer(), now=NOW + 700, idle_s=180, failures=failures)
     assert [(d["session_id"], d["status"]) for d in done] == [("broken", "ok"), ("partial", "ok")]
     assert run_once(rec, out, AlwaysAnswer(), now=NOW + 1400, idle_s=180, failures={}) == []  # 判全了，再重启也不重判
+
+
+# ---- #8 实时摄像头观察：会话结束后生成 observe.json，不经过大模型 ----
+
+def _obs_dirs(tmp_path):
+    rec, out = _dirs(tmp_path)
+    obs = tmp_path / "obs"
+    obs.mkdir()
+    return rec, out, obs
+
+
+def _frames(path, n=20, t0=1.0, mtime=None):
+    """n 帧没有检出的空帧（f / p 都是 null）：够 live.py 生成段落，不依赖具体数值。"""
+    path.write_text("".join(json.dumps({"t": t0 + i / 5, "f": None, "p": None}) + "\n" for i in range(n)),
+                    encoding="utf-8")
+    if mtime is not None:
+        os.utime(path, (mtime, mtime))
+
+
+def test_observe_is_built_for_an_ended_session_with_frames(tmp_path):
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "s1.jsonl", ENDED, mtime=NOW - 10)
+    _frames(obs / "s1.frames.jsonl", mtime=NOW - 10)
+    _write(rec / "s2.jsonl", ONGOING, mtime=NOW - 20)            # 还在问：不生成
+    _frames(obs / "s2.frames.jsonl", mtime=NOW - 20)
+    _write(rec / "s3.jsonl", ENDED, mtime=NOW - 10)              # 没开摄像头：不生成
+    done = watch.run_observe(rec, obs, out, now=NOW, idle_s=180)
+    assert [(d["session_id"], d["status"]) for d in done] == [("s1", "observe")]
+    data = json.loads((out / "s1.observe.json").read_text(encoding="utf-8"))
+    assert data["schema_version"] == "face_body-live-0.1" and [s["t"] for s in data["segments"]] == [2.0]
+    assert not (out / "s2.observe.json").exists() and not (out / "s3.observe.json").exists()
+    assert "s1 同期观察已生成：1 段回答" in describe(done[0])
+
+
+def test_observe_is_not_rebuilt_until_frames_or_record_change(tmp_path):
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "s1.jsonl", ENDED, mtime=NOW - 100)
+    _frames(obs / "s1.frames.jsonl", mtime=NOW - 100)
+    assert len(watch.run_observe(rec, obs, out, now=NOW, idle_s=180)) == 1
+    assert watch.run_observe(rec, obs, out, now=NOW + 30, idle_s=180) == []   # 没变化：不重算
+    later = (out / "s1.observe.json").stat().st_mtime + 5
+    _frames(obs / "s1.frames.jsonl", n=30, mtime=later)                       # 问诊结束后又到了一批帧
+    assert [d["status"] for d in watch.run_observe(rec, obs, out, now=NOW + 60, idle_s=180)] == ["observe"]
+
+
+def test_observe_error_is_logged_by_class_and_does_not_block_judge(tmp_path, monkeypatch, capsys):
+    from apps.emotion.face_body import live
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "abcdef123456.jsonl", ENDED, mtime=NOW - 10)
+    _frames(obs / "abcdef123456.frames.jsonl", mtime=NOW - 10)
+
+    def boom(*args, **kwargs):
+        raise ValueError("胃疼两天了")  # 异常文本可能带对话内容：日志只能有类名
+
+    monkeypatch.setattr(live, "observe_session", boom)
+    argv = ["--once", "--consult-dir", str(rec), "--out-dir", str(out), "--obs-dir", str(obs)]
+    assert main(argv, backend=AlwaysAnswer()) == 0
+    printed = capsys.readouterr().out
+    assert "同期观察出错：ValueError" in printed and "胃疼" not in printed
+    assert (out / "abcdef123456.judge.json").is_file() and not (out / "abcdef123456.observe.json").exists()
+
+
+def test_failed_observe_is_not_retried_on_the_same_data(tmp_path, monkeypatch):
+    from apps.emotion.face_body import live
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "s1.jsonl", ENDED, mtime=NOW - 10)
+    _frames(obs / "s1.frames.jsonl", mtime=NOW - 10)
+    real = live.observe_session
+    monkeypatch.setattr(live, "observe_session", lambda *a, **k: (_ for _ in ()).throw(OSError("disk")))
+    failures = {}
+    assert [d["status"] for d in watch.run_observe(rec, obs, out, now=NOW, failures=failures)] == ["observe_error"]
+    monkeypatch.setattr(live, "observe_session", real)
+    assert watch.run_observe(rec, obs, out, now=NOW + 30, failures=failures) == []  # 同样的数据：不空转
+    _frames(obs / "s1.frames.jsonl", n=25, mtime=NOW + 40)
+    assert [d["status"] for d in watch.run_observe(rec, obs, out, now=NOW + 60, failures=failures)] == ["observe"]
+
+
+def test_observe_is_written_even_when_the_judge_backend_is_down(tmp_path):
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "s1.jsonl", ENDED, mtime=NOW - 10)
+    _frames(obs / "s1.frames.jsonl", mtime=NOW - 10)
+    argv = ["--once", "--consult-dir", str(rec), "--out-dir", str(out), "--obs-dir", str(obs)]
+    assert main(argv, backend=Down()) == 0  # 大模型不在线：judge 失败退避，同期观察照常生成
+    assert (out / "s1.observe.json").is_file() and not (out / "s1.judge.json").exists()
+
+
+def test_observe_keeps_running_while_judge_waits_for_a_live_consultation(tmp_path):
+    # 评审发现：judge 给正在进行的下一场问诊让路（最多 --max-wait）时，主循环卡在 judge 里，
+    # 刚结束的会话要等 judge 跑完才生成同期观察。常驻模式下同期观察必须照常按轮生成。
+    import threading
+    rec, out, obs = _obs_dirs(tmp_path)
+    _write(rec / "a.jsonl", ENDED, mtime=time.time() - 10)   # A 已结束，judge A 会被卡住
+    release = threading.Event()
+
+    class Waiting(Down):
+        def ask(self, state, questions):
+            release.wait(10)                                  # 相当于 PoliteBackend 在等数字人空闲
+            return super().ask(state, questions)
+
+    class Stop(BaseException):
+        pass
+
+    def stop(_seconds):
+        raise Stop
+
+    argv = ["--consult-dir", str(rec), "--out-dir", str(out), "--obs-dir", str(obs), "--interval", "0.2"]
+    t = threading.Thread(target=lambda: pytest.raises(Stop, main, argv, backend=Waiting(), sleep=stop), daemon=True)
+    t.start()
+    try:
+        time.sleep(0.5)                                       # judge A 已经在等了
+        _write(rec / "b.jsonl", ENDED, mtime=time.time())     # B 此时结束，开过摄像头
+        _frames(obs / "b.frames.jsonl")
+        deadline = time.time() + 3
+        while not (out / "b.observe.json").exists() and time.time() < deadline:
+            time.sleep(0.1)
+        assert (out / "b.observe.json").is_file()
+    finally:
+        release.set()
+        t.join(15)

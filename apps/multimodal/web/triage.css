@@ -708,6 +708,93 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 
 .modal .disclaimer { padding: 12px 18px 16px; }
 
+/* ── 摄像头观察（camera-observe.js）────────────────────────────────────── */
+
+.cam-toggle {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.cam-toggle .cam-dot { width: 8px; height: 8px; border-radius: 50%; background: #b8c7cb; }
+.cam-toggle[data-state="on"] { background: var(--brand-soft); color: var(--brand-ink); border-color: #bfe2e6; }
+.cam-toggle[data-state="on"] .cam-dot { background: #e5484d; animation: pulse 1.4s ease-in-out infinite; }
+.cam-toggle[data-state="loading"] .cam-dot { background: #e0b354; }
+
+.cam-box {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 5;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.cam-box[hidden] { display: none; }
+
+.cam-badge {
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    color: #fff;
+    background: rgba(160, 45, 33, 0.82);
+}
+
+.cam-view {
+    position: relative;
+    width: 160px;
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0a1e23;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    transform: scaleX(-1);   /* 镜像显示；打点画在同一个镜像容器里，位置对得上 */
+}
+
+.cam-view video, .cam-view canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cam-panel {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e8f6f7;
+    background: rgba(10, 30, 35, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.cam-panel-head { display: flex; align-items: center; gap: 6px; color: #9fc3c9; }
+.cam-fold { margin-left: auto; padding: 0 4px; border: none; background: none; color: #9fc3c9; font-size: 11.5px; }
+.cam-panel-body { margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.msg-obs {
+    max-width: 92%;
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+}
+
+.obs-info { cursor: help; opacity: 0.8; }
+
 /* ── 响应式 ───────────────────────────────────────────────────────────── */
 
 @media (max-width: 960px) {
@@ -726,4 +813,5 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
     .mic-btn { width: 68px; height: 68px; }
     .mic-btn-label { display: none; }
     .mic-info { flex-basis: 100%; order: 3; }
+    .cam-box { width: 180px; }
 }

@@ -37,4 +37,5 @@
 | [SenseVoice](https://github.com/FunAudioLLM/SenseVoice)（`iic/SenseVoiceSmall`，经 ModelScope 下载） | 语音识别模型 | 代码仓库 MIT；模型权重以上游为准 |
 | [ChatTTS](https://github.com/2noise/ChatTTS) | 本地语音合成 | 代码 AGPL-3.0（上游写作 AGPLv3+）；模型 CC BY-NC 4.0（上游 README） |
 | [MediaPipe](https://github.com/google-ai-edge/mediapipe) | 面部与姿态关键点（阶段三 `face_body`） | Apache-2.0 |
+| [@mediapipe/tasks-vision](https://www.npmjs.com/package/@mediapipe/tasks-vision)（MediaPipe Tasks Vision 网页版 1.0.1） | 患者页摄像头观察的浏览器端打点；`15_setup_camera_assets.sh` 部署时从 npm 下载（校验 sha512）到 LiveTalking 静态目录，模型复用上一行的 MediaPipe 模型 | Apache-2.0（npm 包的 `package.json`） |
 | [coturn](https://github.com/coturn/coturn) | TURN 中继（docker 镜像） | BSD 三条款式许可（上游 LICENSE 原文） |

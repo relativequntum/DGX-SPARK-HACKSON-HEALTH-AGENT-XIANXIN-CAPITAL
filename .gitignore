@@ -38,3 +38,6 @@ logs/
 outputs/
 coverage.xml
 htmlcov/
+
+# 第三方前端资源（MediaPipe 网页版与模型）：部署时由 15_setup_camera_assets.sh 放进 LiveTalking 静态目录，不进仓库
+apps/multimodal/web/vendor/

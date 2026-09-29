@@ -56,9 +56,9 @@ unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
 "$DOCTOR_VENV/bin/python" -m pip install -q -U pip "${PIPOPT[@]}"
 "$DOCTOR_VENV/bin/python" -m pip install -q fastapi uvicorn "${PIPOPT[@]}"
 
-echo "==> [3/5] 准备问诊记录目录：$DOCTOR_RECORD_DIR（权限 700）"
-mkdir -p "$DOCTOR_RECORD_DIR"
-chmod 700 "$DOCTOR_RECORD_DIR"
+echo "==> [3/5] 准备问诊记录目录：$DOCTOR_RECORD_DIR 与摄像头观察目录：$DOCTOR_OBS_DIR（权限 700）"
+mkdir -p "$DOCTOR_RECORD_DIR" "$DOCTOR_OBS_DIR"
+chmod 700 "$DOCTOR_RECORD_DIR" "$DOCTOR_OBS_DIR"
 
 echo "==> [4/5] 启动医生端服务（${DOCTOR_HOST}:${DOCTOR_PORT}）"
 if [ "$(pwd)" = "$DOCTOR_DIR" ]; then
@@ -71,7 +71,7 @@ if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
   sleep 1
 fi
 export DOCTOR_PORT DOCTOR_HOST DOCTOR_WEB_DIR DOCTOR_RECORD_DIR DOCTOR_RECORD
-export DOCTOR_LT_ADMIN_URL DOCTOR_ACTIVE_WINDOW
+export DOCTOR_LT_ADMIN_URL DOCTOR_ACTIVE_WINDOW DOCTOR_OBS_DIR DOCTOR_OBSERVE
 nohup "$DOCTOR_VENV/bin/python" "$DOCTOR_DIR/doctor_service.py" > "$LOG_DIR/doctor.log" 2>&1 &
 echo $! > "$PID_FILE"
 echo "    pid=$(cat "$PID_FILE")，日志: $LOG_DIR/doctor.log"

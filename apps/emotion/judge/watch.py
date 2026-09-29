@@ -13,6 +13,8 @@
 全部判断都失败（比如 llama-server 没起来）时不写结果，--retry 秒后或记录变了再试；
 部分失败时先写出判到的部分给医生看，--retry 秒后整段重判，判全了才算完。
 单条会话出意外（坏文件、磁盘、后端抛了别的异常）只让这一条退避，其余会话照常，进程不退出；日志只写异常类名。
+同期观察：患者开了摄像头的会话（--obs-dir 里有 <会话>.frames.jsonl），结束后先用 face_body/live.py 生成
+`<out-dir>/<会话>.observe.json`；只算数值，不调用大模型、不等模型空闲，出错只记异常类名，不影响 judge。
 """
 from __future__ import annotations
 
@@ -21,6 +23,7 @@ import json
 import os
 import pathlib
 import sys
+import threading
 import time
 import urllib.request
 
@@ -33,6 +36,7 @@ from .sources import from_consult_record
 IDLE_S = 180.0
 RETRY_S = 600.0
 DEFAULT_LT_ADMIN = "http://127.0.0.1:8010/api/admin/sessions"
+DEFAULT_OBS_DIR = "~/livetalking-logs/observations"
 
 
 def _scan(path: pathlib.Path) -> tuple:
@@ -126,6 +130,65 @@ def run_once(consult_dir, out_dir, backend, now=None, idle_s: float = IDLE_S, ke
     return done
 
 
+def observe_pending(consult_dir, obs_dir, out_dir, now=None, idle_s: float = IDLE_S) -> list:
+    """需要（重新）生成同期观察的 (会话编号, 问诊记录, frames)，按文件名排序。
+    条件：有 frames 与问诊记录；会话已结束（与 judge 同一标准：有 summary，或 idle_s 秒没新内容）；
+    observe.json 不存在，或比 frames、问诊记录旧（问诊结束后才到的 frames 也会触发重算）。"""
+    now = time.time() if now is None else now
+    consult_dir, obs_dir, out_dir = pathlib.Path(consult_dir), pathlib.Path(obs_dir), pathlib.Path(out_dir)
+    if not obs_dir.is_dir() or not consult_dir.is_dir():
+        return []
+    todo = []
+    for frames in sorted(obs_dir.glob("*.frames.jsonl")):
+        sid = frames.name[:-len(".frames.jsonl")]
+        record = consult_dir / f"{sid}.jsonl"
+        result = out_dir / f"{sid}.observe.json"
+        try:
+            if not record.is_file():
+                continue
+            rec_m, fr_m = record.stat().st_mtime, frames.stat().st_mtime
+            if result.is_file() and result.stat().st_mtime >= max(rec_m, fr_m):
+                continue
+            ended, _patient = _scan(record)
+        except OSError:
+            continue
+        if ended or now - rec_m >= idle_s:
+            todo.append((sid, record, frames))
+    return todo
+
+
+def run_observe(consult_dir, obs_dir, out_dir, now=None, idle_s: float = IDLE_S, failures=None) -> list:
+    """给已结束的会话生成 observe.json。不经过 PoliteBackend、不占模型；一条出错只记类名，
+    同样的数据不再重试（frames 或问诊记录变了再试），不影响其余会话和 judge。"""
+    failures = {} if failures is None else failures
+    try:
+        from ..face_body import live
+    except ImportError:  # 只部署了 judge、没部署 face_body：跳过同期观察
+        return []
+    out_dir = pathlib.Path(out_dir)
+    done = []
+    for sid, record, frames in observe_pending(consult_dir, obs_dir, out_dir, now, idle_s):
+        started, key = time.time(), None
+        try:
+            key = max(record.stat().st_mtime, frames.stat().st_mtime)
+            if failures.get(sid) == key:
+                continue
+            path = live.observe_session(record, frames, out_dir)
+            if max(record.stat().st_mtime, frames.stat().st_mtime) != key:  # 生成期间又来了数据：下一轮再算
+                os.utime(path, (key, key))
+            segments = json.loads(path.read_text(encoding="utf-8")).get("segments") or []
+        except Exception as exc:  # noqa: BLE001 - 同期观察出错不能拖垮 judge
+            failures[sid] = key
+            done.append({"session_id": sid, "status": "observe_error", "error": type(exc).__name__,
+                         "seconds": round(time.time() - started, 1)})
+            continue
+        failures.pop(sid, None)
+        done.append({"session_id": sid, "status": "observe", "segments": len(segments),
+                     "measured": sum(1 for s in segments if "ok" in (s.get("face_status"), s.get("body_status"))),
+                     "seconds": round(time.time() - started, 1)})
+    return done
+
+
 class PoliteBackend:
     """每次请求前先等 llama-server 与数字人都空下来（最多 max_wait_s 秒），再交给 inner。"""
 
@@ -193,6 +256,10 @@ def make_is_busy(llm_base_url, lt_admin_url, timeout: float = 2.5):
 
 def describe(item: dict) -> str:
     sid = item["session_id"][:8]
+    if item["status"] == "observe":
+        return f"{sid} 同期观察已生成：{item['segments']} 段回答，其中 {item['measured']} 段有数（{item['seconds']}s）"
+    if item["status"] == "observe_error":
+        return f"{sid} 同期观察出错：{item['error']}，数据更新后再试（{item['seconds']}s）"
     if item["status"] == "error":
         return f"{sid} 判断出错：{item['error']}，稍后重试（{item['seconds']}s）"
     if item["status"] == "failed":
@@ -223,14 +290,35 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-wait", type=float, default=600.0, help="大模型或数字人忙时最多等多久（秒）")
     p.add_argument("--retry", type=float, default=RETRY_S, help="出错、全部或部分失败后多久再试（秒）")
     p.add_argument("--lt-admin-url", default=os.environ.get("LT_ADMIN_URL") or DEFAULT_LT_ADMIN)
+    p.add_argument("--obs-dir", default=os.environ.get("EMOTION_OBS_DIR") or DEFAULT_OBS_DIR,
+                   help="患者页摄像头观察的逐帧数值（doctor_service 写的 <会话>.frames.jsonl）")
     p.add_argument("--once", action="store_true", help="扫一遍就退出")
     return p
+
+
+def observe_round(consult_dir, obs_dir, out_dir, idle_s: float, failures: dict) -> None:
+    """同期观察扫一轮并记日志；出意外只记类名，不影响 judge。"""
+    try:
+        for item in run_observe(consult_dir, obs_dir, out_dir, idle_s=idle_s, failures=failures):
+            log(describe(item))
+    except Exception as exc:  # noqa: BLE001 - 同期观察出意外不影响 judge
+        log(f"本轮同期观察出错：{type(exc).__name__}")
+
+
+def observe_forever(consult_dir, obs_dir, out_dir, idle_s: float, interval: float, stop) -> None:
+    """常驻模式下同期观察单独一个线程：judge 给数字人让路时（最多 --max-wait 秒）主循环会卡在 judge 里，
+    同期观察只算数值，不能跟着等，否则连着做几场问诊时后一场的观察要等前一场 judge 跑完。"""
+    failures: dict = {}
+    while not stop.is_set():
+        observe_round(consult_dir, obs_dir, out_dir, idle_s, failures)
+        stop.wait(interval)
 
 
 def main(argv=None, backend=None, sleep=time.sleep) -> int:
     args = build_parser().parse_args(sys.argv[1:] if argv is None else argv)
     consult_dir = pathlib.Path(args.consult_dir).expanduser()
     out_dir = pathlib.Path(args.out_dir).expanduser()
+    obs_dir = pathlib.Path(args.obs_dir).expanduser()
     if backend is None:
         if args.backend == "openai":
             local = LocalOpenAIBackend(base_url=args.base_url, model=args.model, timeout=args.timeout)
@@ -240,20 +328,29 @@ def main(argv=None, backend=None, sleep=time.sleep) -> int:
             is_busy = make_is_busy(None, args.lt_admin_url)
         backend = PoliteBackend(local, is_busy, max_wait_s=args.max_wait)
     log(f"盯 {consult_dir} → {out_dir}；来源 {getattr(backend, 'source', '')}；"
-        f"结束或静默 {args.idle:.0f}s 后判断")
+        f"结束或静默 {args.idle:.0f}s 后判断；同期观察读 {obs_dir}")
     failures: dict = {}
-    while True:
-        ok = True
-        try:
-            for item in run_once(consult_dir, out_dir, backend, idle_s=args.idle, failures=failures,
-                                 retry_s=args.retry):
-                log(describe(item))
-        except Exception as exc:  # noqa: BLE001 - 常驻服务：这一轮出意外只记类名，下一轮照常扫
-            ok = False
-            log(f"本轮扫描出错：{type(exc).__name__}，{args.interval:.0f}s 后再扫")
-        if args.once:
-            return 0 if ok else 1
-        sleep(args.interval)
+    stop = threading.Event()
+    if not args.once:  # 常驻：同期观察单独一个线程，不被 judge 的让路等待挡住
+        threading.Thread(target=observe_forever, name="observe", daemon=True,
+                         args=(consult_dir, obs_dir, out_dir, args.idle, args.interval, stop)).start()
+    try:
+        while True:
+            ok = True
+            if args.once:  # 扫一遍：同期观察先做（只算数值、很快）
+                observe_round(consult_dir, obs_dir, out_dir, args.idle, {})
+            try:
+                for item in run_once(consult_dir, out_dir, backend, idle_s=args.idle, failures=failures,
+                                     retry_s=args.retry):
+                    log(describe(item))
+            except Exception as exc:  # noqa: BLE001 - 常驻服务：这一轮出意外只记类名，下一轮照常扫
+                ok = False
+                log(f"本轮扫描出错：{type(exc).__name__}，{args.interval:.0f}s 后再扫")
+            if args.once:
+                return 0 if ok else 1
+            sleep(args.interval)
+    finally:
+        stop.set()
 
 
 if __name__ == "__main__":

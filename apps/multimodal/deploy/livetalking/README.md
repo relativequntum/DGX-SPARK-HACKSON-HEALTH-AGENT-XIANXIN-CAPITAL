@@ -27,8 +27,9 @@
 | 6 | `12_setup_openclaw.sh` | OpenClaw 配置：开启端点、注册 provider/agent、关 thinking、导出 token、同步 agent 工作区（[`../openclaw/workspace-tcm`](../openclaw/README.md)）、注入 agent 规则 | 2–5min | 输出 agent 一轮真实回复 |
 | 7 | `08_setup_turn.sh` | WebRTC over TCP：coturn + 前端强制 relay | 2–5min | 之后跑 `09_turn_smoke_test.sh` |
 | 8 | `03_run.sh` | 启动数字人（`8010`） | 30s | `04_smoke_test.sh` |
-| 9 | `13_deploy_web.sh` | 部署阶段二预问诊页面（`triage.html/css/js` + `mic-asr.js`，同时带上 `doctor.html/css/js` 作为入口） | <1min | 自检录音依赖 `web/asr/recorder-core.js` |
-| 10 | `14_setup_doctor_console.sh` | 医生端控制台：独立 venv 起 `doctor_service.py`（`0.0.0.0:8110`），静态托管 `doctor.*` 并提供 `/api/doctor/*` | 1–3min | 轮询 `/health`，输出访问地址 |
+| 9 | `13_deploy_web.sh` | 部署阶段二预问诊页面（`triage.html/css/js` + `mic-asr.js` + `camera-*.js`，同时带上 `doctor.html/css/js` 作为入口） | <1min | 自检录音依赖 `web/asr/recorder-core.js` 与 `web/vendor/mediapipe` |
+| 10 | `14_setup_doctor_console.sh` | 医生端控制台：独立 venv 起 `doctor_service.py`（`0.0.0.0:8110`），静态托管 `doctor.*` 并提供 `/api/doctor/*`，并接收患者页摄像头观察的关键点数值（`POST /api/observe/<会话>`） | 1–3min | 轮询 `/health`，输出访问地址 |
+| 11 | `15_setup_camera_assets.sh` | 患者页「摄像头观察」的静态资源：MediaPipe 网页版（npm `@mediapipe/tasks-vision`，校验 sha512）+ 两个模型（从 `~/emotion-models/mediapipe` 复制，校验 sha256）→ `$APP_DIR/web/vendor/mediapipe/`；不进仓库；npm 不通时用 `CAM_ASSETS_TGZ` 离线装 | 1–2min | curl 自检 4 个文件返回 200，打印 Content-Type |
 
 **AI 执行要点：**
 
@@ -80,6 +81,10 @@ aarch64 上 `torch-2.9.1+cu130-cp312` 官方轮子可用；`torchvision==0.24.1`
 | `DOCTOR_RECORD_DIR` | `~/livetalking-logs/consultations` | 问诊转写落盘目录，LiveTalking 与医生端服务**必须用同一个** |
 | `DOCTOR_ACTIVE_WINDOW` | `900` | 超过这个秒数没有新消息就不再算"正在问诊" |
 | `DOCTOR_RECORD` | `1` | 置 `0` 暂停问诊记录落盘（隐私演练/排障用） |
+| `DOCTOR_OBS_DIR` | `~/livetalking-logs/observations` | 摄像头观察的关键点数值落盘目录（目录 700、文件 600），与阶段三 `spark.env` 的 `EMOTION_OBS_DIR` **必须相同** |
+| `DOCTOR_OBSERVE` | `1` | 置 `0` 不收摄像头观察数据（`/api/observe` 返回 404，患者页照常问诊） |
+| `CAM_TASKS_VISION_VERSION` / `CAM_TASKS_VISION_INTEGRITY` | `1.0.1` / npm 登记的 sha512 | `15` 装的网页版版本与校验值，换版本时两个一起改 |
+| `CAM_NPM_REGISTRY` | `https://registry.npmmirror.com` | `15` 先走的 npm 镜像（直连），不通再走官方源 + `PROXY` |
 
 ## 3. 全本地链路（部署完成后的形态）
 
@@ -189,7 +194,7 @@ app.log: Connection state is connecting → failed
 | --- | --- | --- |
 | `8010` TCP | 页面与信令 | 需放通 |
 | `3478` TCP | TURN（仅 TCP 场景） | 需放通 |
-| `8110` TCP | 医生端控制台（页面 + 只读接口） | 医生不在同机时才放通 |
+| `8110` TCP | 医生端控制台（页面 + 只读接口）；患者页摄像头观察上传关键点数值（`POST /api/observe`） | 医生不在同机时才放通；经 SSH 隧道使用时患者端也要转发 8110 |
 | `8080` / `8090` / `18789` | 本地 LLM / TTS / OpenClaw | **只监听 127.0.0.1，不要放通** |
 | UDP 1-65535 | 原生 WebRTC（有 TURN 时不需要） | 可全部不放通 |
 
@@ -269,6 +274,10 @@ WEB_SRC=$HOME/livetalking-deploy/web bash 13_deploy_web.sh
 服务端 `~/livetalking-logs/app.log` 出现 `notify:{'status': 'llm_text', ...}` 与 `llm_done`，
 右侧气泡文本随流式事件增长。真实麦克风需在有图形界面的浏览器里人工确认。
 
+**摄像头观察（可选）**：页面多了 `camera-observe.js`、`camera-metrics.js` 两个文件，打点资源在 `web/vendor/mediapipe/`
+（先跑 `15_setup_camera_assets.sh`；没有它时开关显示"摄像头观察不可用"，问诊不受影响）。本机冒烟（不连 Spark，无头 Chrome + 假摄像头）：
+`node apps/multimodal/web/tests/smoke-camera.mjs`；端到端：`node apps/multimodal/web/tests/smoke-e2e.mjs`。
+
 ## 12. 医生端控制台（`14_setup_doctor_console.sh`）
 
 给医生看的一侧：**正在问诊的会话列表 → 文字版对话记录 → 问诊结束后的医生参考版总结**。
@@ -310,6 +319,10 @@ bash 14_setup_doctor_console.sh
 - 记录文件权限 `600`、目录 `700`，`DOCTOR_RECORD=0` 可整体停写；
 - 页面上不做任何诊断判断，顶部/底部保留免责声明，内容须医生当面核实；
 - 原始录音依然不落盘，这里只有文字（与第 13 节的隐私约束一致）。
+- **唯一的写接口** `POST /api/observe/<会话>`：患者页摄像头观察每 2 秒一批关键点数值，整批校验（请求体 ≤ 64 KB、≤ 50 帧、
+  字段白名单、数值有限、会话编号 `[A-Za-z0-9_-]{8,64}`），时间换成服务器时间后追加写 `$DOCTOR_OBS_DIR/<会话>.frames.jsonl`
+  （单文件 ≤ 20 MB、所有会话合计 ≤ 2 GB，超过返回 413；请求体超过 64 KB 时不读完就拒绝），`DOCTOR_OBSERVE=0` 关闭；`/highlights` 同时返回阶段三生成的 `observe_segments`、
+  `observe_medians`、`camera`、`observe_ready`，`/health` 多了 `obs_dir`、`obs_dir_exists`、`observe_enabled`。
 
 ## 13. 阶段二约束（部署侧）
 

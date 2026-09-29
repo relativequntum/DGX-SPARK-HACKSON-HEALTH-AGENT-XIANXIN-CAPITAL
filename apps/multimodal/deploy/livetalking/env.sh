@@ -110,6 +110,15 @@ export HF_ENDPOINT
 : "${DOCTOR_ACTIVE_WINDOW:=900}"                               # 超过多久没新消息就不再算"正在问诊"（秒）
 : "${DOCTOR_LT_ADMIN_URL:=http://127.0.0.1:8010/api/admin/sessions}"
 : "${DOCTOR_RECORD:=1}"                                        # 0 = 暂停问诊记录落盘（一旦涉及隐私演练）
+# 患者页「摄像头观察」：浏览器只上传关键点数值，doctor_service 追加写到这里（与阶段三 spark.env 的 EMOTION_OBS_DIR 必须相同）
+: "${DOCTOR_OBS_DIR:=$HOME/livetalking-logs/observations}"
+: "${DOCTOR_OBSERVE:=1}"                                       # 0 = 不收摄像头观察数据（接口返回 404，患者页照常问诊）
+
+# ---- 摄像头观察的网页端资源（15_setup_camera_assets.sh 使用）----
+: "${CAM_TASKS_VISION_VERSION:=1.0.1}"                          # @mediapipe/tasks-vision，与阶段三 mediapipe==1.0.1 同版本
+# npm 登记的 tgz 校验值；换版本时一起改：npm view @mediapipe/tasks-vision@<版本> dist.integrity
+: "${CAM_TASKS_VISION_INTEGRITY:=sha512-rvRE2FmAZ6ZxKSw7wq+e+jQDpN3t1B/tD2mJz9SmAzb1msoDkd4dMoE4wAh8Z30Um0PQwLiHr9QtomhmXk3aUQ==}"
+: "${CAM_NPM_REGISTRY:=https://registry.npmmirror.com}"         # 国内 npm 镜像，直连；不通时 15 改走官方源 + PROXY
 
 # ---- 运行时 ----
 : "${MODEL:=wav2lip}"                      # 数字人模型：wav2lip / musetalk / ultralight
@@ -146,5 +155,6 @@ export LOCAL_TURN_PORT LOCAL_TURN_SECRET_FILE LOCAL_TURN_TTL LOCAL_TURN_URLS
 export ICE_HOST
 export LLM_MAX_SPEAK_CHARS TTS_SEGMENT_CHARS LLM_TIMEOUT
 export DOCTOR_PORT DOCTOR_HOST DOCTOR_VENV DOCTOR_DIR DOCTOR_WEB_DIR DOCTOR_RECORD_DIR
-export DOCTOR_ACTIVE_WINDOW DOCTOR_LT_ADMIN_URL DOCTOR_RECORD
+export DOCTOR_ACTIVE_WINDOW DOCTOR_LT_ADMIN_URL DOCTOR_RECORD DOCTOR_OBS_DIR DOCTOR_OBSERVE
+export CAM_TASKS_VISION_VERSION CAM_TASKS_VISION_INTEGRITY CAM_NPM_REGISTRY
 export AIOICE_HOST_ALLOWLIST="$ICE_HOST"

@@ -14,7 +14,7 @@
 ## 当前实现
 
 - **阶段二**（`apps/multimodal/`）：LiveTalking 数字人 + WebRTC（经 TURN 的 TCP 中继），本地 SenseVoice 语音识别与 ChatTTS 语音合成；对话走 OpenClaw agent（`tcm-preconsultation` Skill），失败时降级到同机 llama.cpp `llama-server`（Qwen3.6-35B-A3B GGUF）；医生工作台读取本机问诊记录。已部署在 DGX Spark。
-- **阶段三**（`apps/emotion/`）：`judge/` 在问诊结束后用同一个本地模型判断对话重点，给医生工作台「重点」页签供数；`face_body/` 用 MediaPipe 离线处理视频。
+- **阶段三**（`apps/emotion/`）：`judge/` 在问诊结束后用同一个本地模型判断对话重点，给医生工作台「重点」页签供数；`face_body/` 用 MediaPipe 离线处理视频，并在问诊结束后统计患者页可选摄像头观察的关键点数值（浏览器端打点，画面不出浏览器），给医生工作台的同期观察。
 - **阶段一**（`apps/text_triage/`）与 `packages/core/` 仍是预留目录；文字预问诊暂由 OpenClaw agent 与 Skill 承担。
 - 原则 2 要求的确定性红旗规则层已有设计（[`docs/safety-and-privacy.md`](../safety-and-privacy.md)），尚未实现；跨阶段公共契约也尚未冻结。
 

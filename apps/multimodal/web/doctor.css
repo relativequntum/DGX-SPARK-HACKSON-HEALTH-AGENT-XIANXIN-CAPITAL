@@ -453,6 +453,19 @@ h1, h2, h3 { margin: 0; font-weight: 600; }
 .hl-text { font-size: 14px; font-weight: 600; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
 .hl-ev { font-size: 13px; color: var(--ink-2); }
 .hl-labels { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--ink-2); }
+.hl-obs { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* 摄像头同期观察：对话记录里患者回答下方的一行，与没开摄像头时的一次性说明 */
+.msg-obs { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chat-obs-note {
+    align-self: stretch;
+    padding: 6px 10px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 12.5px;
+    color: var(--ink-3);
+}
 
 /* 对话记录里被标为重点的回答：气泡左侧一道色条，抬头多一个标签 */
 .msg-hit .msg-bubble { box-shadow: inset 3px 0 0 var(--amber); }

@@ -231,6 +231,7 @@
         wrap.querySelector('.msg-bubble').textContent = text;
         el.chatList.appendChild(wrap);
         scrollChat();
+        return wrap;
     }
 
     function addAssistantMessage(text) {
@@ -552,6 +553,8 @@
     }
 
     function onLLMDone() {
+        // 摄像头观察：助手这一轮回复结束，下一段「本次回答观察」从这里算起
+        if (window.CameraObserve) { window.CameraObserve.markReplyEnd(); }
         replySettled();
         state.replyDone = true;
         // 兜底一：llm_done 后迟迟没有语音播出（TTS 失败/被静音），6s 后补上正文
@@ -698,7 +701,9 @@
     function onUserText(text, source) {
         cancelFiller();             // 新一轮开始：撤掉上一轮可能还挂着的垫词
         flushReplyTail(true);   // 新一轮开始：无条件先结掉上一轮没显示完的正文
-        addUserMessage(text, source);
+        var node = addUserMessage(text, source);
+        // 摄像头观察：这句话下面追加「本次回答观察」（没开摄像头时什么都不加）
+        if (window.CameraObserve) { window.CameraObserve.onAnswer(node); }
         state.turn += 1;
         setMeta('第 ' + state.turn + ' 轮 · ' + (source === 'voice' ? '语音' : '文字'));
         return sendChat(text, {});
@@ -782,6 +787,7 @@
      * 这里故意不动 WebRTC / SSE——小结还得靠这条链路回来，真正断开在 closeAvatar()。
      */
     function hideAvatarToStart() {
+        if (window.CameraObserve) { window.CameraObserve.sessionEnded(); }   // 停止采集、释放摄像头，送出最后一批
         state.ended = true;   // 收尾阶段链路断了也不要自动重连，否则数字人会自己回来
         stopListening(false);
         stopHeartbeat();
@@ -803,6 +809,7 @@
      * 左栏回到开始问诊前的样子，只保留右侧对话记录与小结。
      */
     function closeAvatar() {
+        if (window.CameraObserve) { window.CameraObserve.sessionEnded(); }   // 必须在清空 consultId 之前
         stopListening(false);
         stopHeartbeat();
         clearTimeout(state.retryTimer);
@@ -921,6 +928,7 @@
         if (el.finishBtn) { el.finishBtn.disabled = false; }
         if (el.chatInput) { el.chatInput.disabled = false; }
         if (el.sendBtn) { el.sendBtn.disabled = false; }
+        if (window.CameraObserve) { window.CameraObserve.sessionReady(); }   // 继续问诊：可以重新开启摄像头观察
         state.userPaused = false;
         state.ended = false;      // 恢复自动重连能力
         setPhase('listening', '请继续');
@@ -1051,7 +1059,8 @@
         el.chatInput.disabled = false;
         el.sendBtn.disabled = false;
         el.finishBtn.disabled = false;
-
+        // 会话已连上：允许开启摄像头观察（断线重连沿用同一个 consultId，观察数据接着写同一个文件）
+        if (window.CameraObserve) { window.CameraObserve.sessionReady(); }
     }
 
     function playGreeting() {
@@ -1210,6 +1219,7 @@
             el.chatInput.style.height = Math.min(132, el.chatInput.scrollHeight) + 'px';
         });
         window.addEventListener('beforeunload', function () {
+            if (window.CameraObserve) { window.CameraObserve.stop(); }
             if (state.pc) { try { state.pc.close(); } catch (e) { /* 忽略 */ } }
             if (state.mic) { state.mic.close(); }
         });
@@ -1240,11 +1250,16 @@
 
         addSystemMessage('已连接数字人，语音交互已开启（设计预览）');
         addAssistantMessage(CFG.greeting);
-        addUserMessage('这两天胃有点胀，吃完饭更明显', 'voice');
+        var u1 = addUserMessage('这两天胃有点胀，吃完饭更明显', 'voice');
         addAssistantMessage('明白了。请问这种胀的感觉持续多久了？');
-        addUserMessage('大概三四天', 'voice');
+        var u2 = addUserMessage('大概三四天', 'voice');
         addAssistantMessage('好的。除了胀，还有没有反酸、烧心，或者恶心的感觉？');
-        addUserMessage('偶尔有点反酸，没有恶心', 'text');
+        var u3 = addUserMessage('偶尔有点反酸，没有恶心', 'text');
+        if (window.CameraObserve) {   // 示例观察行（演示模式不上传任何数据）
+            window.CameraObserve.appendLine(u1, '本次回答观察：目光偏离 12% · 眨眼 16 次/分 · 手触脸 0% · 小动作 0.5');
+            window.CameraObserve.appendLine(u2, '本次回答观察：目光偏离 35% · 眨眼 24 次/分 · 手触脸 10% · 小动作 1.2');
+            window.CameraObserve.appendLine(u3, '本次回答观察：观察数据不足');
+        }
         addAssistantMessage('好的，我记下了。最近有没有服用什么药物，或者做过胃部的检查？');
 
         state.summary = {
@@ -1312,6 +1327,9 @@
         bindEvents();
         setPhase('idle', '点击「开始问诊」后自动开启语音交互');
         setMeta('等待开始');
+        if (window.CameraObserve) {
+            window.CameraObserve.init({ getConsultId: function () { return state.consultId; }, toast: showToast });
+        }
 
         if (CFG.demo) { renderDemo(); }
     }

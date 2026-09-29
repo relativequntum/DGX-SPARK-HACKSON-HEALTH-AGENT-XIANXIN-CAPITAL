@@ -21,7 +21,7 @@ if [ -z "$WEB_SRC" ]; then
   fi
 fi
 DEST="$APP_DIR/web"
-FILES=(triage.html triage.css triage.js mic-asr.js doctor.html doctor.css doctor.js)
+FILES=(triage.html triage.css triage.js mic-asr.js camera-metrics.js camera-observe.js doctor.html doctor.css doctor.js)
 # 页面通过这些上游文件实现录音（Recorder 库），缺失则语音交互不可用
 DEPS=(asr/recorder-core.js asr/pcm.js)
 
@@ -44,6 +44,11 @@ for dep in "${DEPS[@]}"; do
     echo "    !!   缺少 $DEST/$dep（录音/识别会不可用，请先确认上游 LiveTalking 源码完整）"
   fi
 done
+if [ -f "$DEST/vendor/mediapipe/vision_bundle.js" ]; then
+  echo "    OK   vendor/mediapipe（摄像头观察，版本 $(cat "$DEST/vendor/mediapipe/VERSION" 2>/dev/null || echo 未知)）"
+else
+  echo "    --   没有 vendor/mediapipe：患者页的「摄像头观察」会显示不可用，问诊不受影响（装它跑 15_setup_camera_assets.sh）"
+fi
 
 echo "==> 完成"
 echo "    设计预览（不连后端）：http://<host>:$PORT/triage.html?demo=1"

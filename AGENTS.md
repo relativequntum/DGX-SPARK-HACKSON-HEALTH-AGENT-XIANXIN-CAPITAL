@@ -95,7 +95,7 @@ Issue 是任务、讨论、裁决和结论的唯一正式存档。群聊结论�
 ## 8. 当前仓库状态
 
 - **阶段二**（`apps/multimodal/`：数字人、本地 ASR/TTS/LLM、OpenClaw 预问诊 agent、医生工作台）已实现并部署在 DGX Spark 上运行，部署见 `apps/multimodal/deploy/livetalking/README.md`。
-- **阶段三**（`apps/emotion/judge/`、`apps/emotion/face_body/`）已实现；judge 以常驻服务在 Spark 上为医生工作台「重点」页签供数，face_body 目前离线处理视频。部署见 `apps/emotion/deploy/README.md`。
+- **阶段三**（`apps/emotion/judge/`、`apps/emotion/face_body/`）已实现；judge 以常驻服务在 Spark 上为医生工作台「重点」页签供数，face_body 既离线处理视频，也在问诊结束后统计患者页可选摄像头观察的关键点数值（`live.py`，给医生工作台「对话记录」「重点」的同期观察）。部署见 `apps/emotion/deploy/README.md`。
 - **阶段一**（`apps/text_triage/`）及 `packages/core/`、`data/question_trees/` 仍是预留目录，尚未实现；文字预问诊暂由阶段二的 OpenClaw agent 与 `tcm-preconsultation` Skill 承担。§3 第 6 条要求的确定性安全层尚未实现。
 
 项目对外介绍见根目录 `README.md`，开发准备说明见 `docs/development.md`。

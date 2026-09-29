@@ -5,6 +5,8 @@
  * `?demo=1` 打开示例数据（不请求后端），`?api=http://host:8110` 可指向其它地址的服务。
  * 「重点」页签读 /api/doctor/sessions/<id>/highlights（阶段三 judge 在问诊结束后自动标出的值得先看的回答），
  * 点一条跳回对话原句；`?tab=highlights` 打开页面时直接停在这个页签。
+ * 患者开了摄像头观察时，同一个接口还带 observe_segments：「对话记录」每条患者回答、「重点」每条命中
+ * 下方加一行「同期观察（相对本人基线）」；只有动作数值，不出情绪标签，数据不足显示 unknown。
  */
 (function () {
     'use strict';
@@ -224,6 +226,24 @@
                 }
             ]
         };
+        // 摄像头同期观察的示例：一段正常、一段偏高（↑）、一段检出不足
+        var segB = [
+            { t: now - 1800, frames: 52, face_status: 'ok', body_status: 'ok', gaze_away_ratio: 0.12,
+                blink_per_min: 16, hand_face_ratio: 0, body_motion_x1000: 0.5 },
+            { t: now - 1700, frames: 48, face_status: 'ok', body_status: 'ok', gaze_away_ratio: 0.35,
+                blink_per_min: 26, hand_face_ratio: 0.1, body_motion_x1000: 1.2 },
+            { t: now - 1600, frames: 4, face_status: 'unknown', body_status: 'unknown', gaze_away_ratio: null,
+                blink_per_min: null, hand_face_ratio: null, body_motion_x1000: null }
+        ];
+        highlights[items[1].id].camera = true;
+        highlights[items[1].id].observe_ready = true;
+        highlights[items[1].id].observe_segments = segB;
+        highlights[items[1].id].observe_medians = { gaze_away_ratio: 0.2, blink_per_min: 16, hand_face_ratio: 0,
+            body_motion_x1000: 0.6 };
+        highlights[items[1].id].hits[0].observe = segB[0];
+        highlights[items[1].id].hits[1].observe = segB[2];
+        highlights[items[0].id] = { ready: false, hits: [], camera: true, observe_ready: false, observe_segments: [] };
+        highlights[items[2].id] = { ready: false, hits: [], camera: false, observe_ready: false, observe_segments: [] };
 
         return {
             list: function (status, q) {
@@ -351,9 +371,72 @@
         el.patientBody.innerHTML = summary.patient ? renderRich(summary.patient) : '';
     }
 
+    /* ── 摄像头同期观察（阶段三 face_body/live.py）─────────────────────── */
+
+    function pctText(v) { return v === null || v === undefined ? '—' : Math.round(v * 100) + '%'; }
+
+    /** 超过会话中位数 1.5 倍标 ↑（中位数为 0 时只要有就标）。 */
+    function upMark(v, m) {
+        return v !== null && v !== undefined && m !== null && m !== undefined && v > 0 && v > 1.5 * m ? ' ↑' : '';
+    }
+
+    /** 一段同期观察 → 一行文字；两个通道都检出不足时只写 unknown。 */
+    function obsLine(seg, medians) {
+        if (!seg) { return ''; }
+        if (seg.face_status !== 'ok' && seg.body_status !== 'ok') { return '同期观察：检出不足（unknown）'; }
+        var md = medians || {};
+        return '同期观察（相对本人基线）：目光偏离 ' + pctText(seg.gaze_away_ratio) + upMark(seg.gaze_away_ratio, md.gaze_away_ratio) +
+            ' · 眨眼 ' + (seg.blink_per_min === null || seg.blink_per_min === undefined ? '—'
+                : Math.round(seg.blink_per_min) + ' 次/分') + upMark(seg.blink_per_min, md.blink_per_min) +
+            ' · 手触脸 ' + pctText(seg.hand_face_ratio) + upMark(seg.hand_face_ratio, md.hand_face_ratio) +
+            ' · 小动作 ' + (seg.body_motion_x1000 === null || seg.body_motion_x1000 === undefined ? '—'
+                : (Math.round(seg.body_motion_x1000 * 10) / 10)) + upMark(seg.body_motion_x1000, md.body_motion_x1000);
+    }
+
+    /** 「重点」里一条命中的观察行：没开摄像头 / 还没生成 / 有段落。旧版服务没有这些字段时不显示。 */
+    function hitObsText(x, h) {
+        if (!h || h.camera === undefined) { return ''; }
+        if (h.camera === false) { return '未开启摄像头'; }
+        if (!h.observe_ready) { return '同期观察：暂不可用（问诊结束后自动生成）'; }
+        return obsLine(x.observe, h.observe_medians);
+    }
+
+    /** 「对话记录」里每条患者回答下方追加观察行；没开摄像头时整段只在最前面说一次。 */
+    function markObserve() {
+        var h = state.highlights || {};
+        var old = el.chat.querySelectorAll('.msg-obs, .chat-obs-note');
+        for (var i = 0; i < old.length; i += 1) { old[i].parentNode.removeChild(old[i]); }
+        if (h.camera === undefined || !el.chat.querySelector('li.msg')) { return; }
+        var note = h.camera === false ? '本场未开启摄像头'
+            : (!h.observe_ready ? '摄像头观察结果暂不可用（问诊结束后自动生成）' : '');
+        if (note) {
+            var li = document.createElement('li');
+            li.className = 'chat-obs-note';
+            li.textContent = note;
+            el.chat.insertBefore(li, el.chat.firstChild);
+            return;
+        }
+        var byT = {};
+        (h.observe_segments || []).forEach(function (s) {
+            var k = tkey(s.t);
+            if (k) { byT[k] = s; }
+        });
+        var msgs = el.chat.querySelectorAll('li.msg-user');
+        for (var j = 0; j < msgs.length; j += 1) {
+            var seg = byT[msgs[j].getAttribute('data-t') || ''];
+            if (!seg) { continue; }
+            var line = document.createElement('span');
+            line.className = 'msg-obs';
+            line.title = '摄像头观察到的动作数值，只与本人基线比较，不代表情绪或健康状况';
+            line.textContent = obsLine(seg, h.observe_medians);
+            msgs[j].appendChild(line);
+        }
+    }
+
     /* ── 重点（阶段三 judge）──────────────────────────────────────────── */
 
-    function hitHTML(x) {
+    function hitHTML(x, h) {
+        var obs = hitObsText(x, h);
         var labels = Object.keys(x.labels || {}).map(function (k) { return x.labels[k]; });
         return '<li><button type="button" class="hl-item' + (x.risk ? ' is-risk' : '') + '" data-t="' +
             esc(tkey(x.t)) + '" data-index="' + esc(x.turn_index == null ? '' : x.turn_index) + '">' +
@@ -365,6 +448,7 @@
             (x.question ? '<span class="hl-q">回答「' + esc(x.question) + '」时</span>' : '') +
             '<span class="hl-text">' + esc(x.text) + '</span>' +
             (x.evidence ? '<span class="hl-ev">依据：「' + esc(x.evidence) + '」</span>' : '') +
+            (obs ? '<span class="hl-obs">' + esc(obs) + '</span>' : '') +
             (labels.length ? '<span class="hl-labels">' + labels.map(function (l) {
                 return '<span>' + esc(l) + '</span>';
             }).join('') + '</span>' : '') +
@@ -394,7 +478,7 @@
             el.hlNotice.hidden = false;
             el.hlNotice.textContent = (h.review_notice || '待医务人员确认。') +
                 ' 百分比是模型自报的把握程度，不是病情或情绪评分。';
-            el.hlList.innerHTML = hits.length ? hits.map(hitHTML).join('')
+            el.hlList.innerHTML = hits.length ? hits.map(function (x) { return hitHTML(x, h); }).join('')
                 : '<li class="empty-list">这次没有达到提示阈值的回答。请仍以完整对话为准，本页不替代红旗规则。</li>';
         }
         markHits();
@@ -415,13 +499,15 @@
             msgs[i].classList.toggle('msg-hit', hit);
             msgs[i].classList.toggle('msg-hit-risk', hit && byT[k]);
         }
+        markObserve();   // 对话记录每次重画后，同期观察行也跟着补上
     }
 
     function loadHighlights(id) {
         return API.highlights(id).then(function (h) {
             if (id !== state.currentId) { return; }
             h = h || { ready: false, hits: [] };
-            var sig = JSON.stringify([id, h.ready, h.stale, h.generated_at, (h.hits || []).length, h.error || '']);
+            var sig = JSON.stringify([id, h.ready, h.stale, h.generated_at, (h.hits || []).length, h.error || '',
+                h.camera, h.observe_ready, (h.observe_segments || []).map(function (s) { return s.frames; }).join(',')]);
             if (sig === state.hlSig) { markHits(); return; }   // 没变化就不重画，免得打断医生正在看的列表
             state.hlSig = sig;
             renderHighlights(h);

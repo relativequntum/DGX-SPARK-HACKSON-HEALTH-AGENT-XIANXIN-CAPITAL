@@ -44,13 +44,39 @@ python -m pytest apps/emotion/face_body/tests -q
 
 本人基线 = 前 5 秒有人脸帧的中位数（决策记录第 22 条）；前 5 秒没有人脸就用全部人脸帧，`baseline.source` 会写明。
 
+## 实时通道（浏览器打点）
+
+实时问诊时患者可以在患者页打开「摄像头观察」（默认关闭）。打点在患者浏览器里做（MediaPipe Tasks Vision 网页版 1.0.1，
+与这里的 Python 版同一套模型），画面不出浏览器；只上传逐帧的关键点数值，统计在 Spark 上由 `live.py` 完成：
+
+```text
+患者页 camera-observe.js ──每 2 秒一批──▶ doctor_service POST /api/observe/<会话>
+                                           └─ 追加写 ~/livetalking-logs/observations/<会话>.frames.jsonl
+emotion-judge-watch（问诊结束后，不用大模型）──▶ live.py ──▶ outputs/judge/consult/<会话>.observe.json
+                                                              └─ 医生工作台「对话记录」「重点」的同期观察
+```
+
+- **逐帧**：`frames.jsonl` 每行 `{"t": 服务器秒, "f": {"bs": 26 个 blendshape, "m": 16 个数} | null, "p": 25 × [x, y, 可见度] | null}`；
+  `to_frame_record` 还原成与 `analyze.frame_record` 同形的帧记录。网页版的头姿矩阵按原样（列主序）上传，
+  `matrix_from_flat` 按平移所在的位置自动还原（核实记录：`docs/superpowers/plans/notes/2026-09-29-mediapipe-js-matrix.md`）。
+- **切段**：问诊记录里每条患者回答（`kind == "user"`，时间 `t_u`）一段，起点取「上一条助手回复或上一条患者回答」，
+  最长 60 秒，且不早于开启摄像头；问诊记录的 `t` 是识别完成的时刻，所以一段覆盖「听题 + 作答」。
+- **统计**：本人基线 = 开启后前 5 秒的中位数；每段用 `windows.aggregate`（同样的平滑、滞回和阈值），
+  检出帧 < 6、检出率 < 0.5 或覆盖不到半段记 `unknown`、不给数；另给出各指标的会话中位数，医生端超过 1.5 倍标 ↑。
+- **输出** `observe.json`（`schema_version: face_body-live-0.1`）：`camera_frames`、人脸 / 姿态检出率、`baseline`、`medians`、
+  `segments[]`（`t`、`interval`、`frames`、`face_status`、`body_status`、`gaze_away_ratio`、`blink_count`、`blink_per_min`、
+  `head_motion_deg_per_frame`、`hand_face_ratio`、`body_motion_x1000`）。
+- 手动重算一场：`python -m apps.emotion.face_body.live --consult <会话>.jsonl --frames <会话>.frames.jsonl --out-dir <目录>`。
+- 患者页上的实时面板和每条回答下的观察行是浏览器端近似（`apps/multimodal/web/camera-metrics.js`，口径照搬这里，
+  有一致性测试），医生端的数以这里为准。
+
 ## 隐私与边界
 
 - `analyze` 只在内存里处理帧，输出只有数值，不存任何图像。
 - `annotate` 的输出**含人脸**，只用于本机演示：不入库、不上传、演示完删掉；不要拿真实患者的视频来画。
 - `record` 录的是你自己：只留本机。`outputs/` 已被 `.gitignore` 挡住。
 - 摄像头观察需要独立授权和屏幕可见提示，来访者可随时切到「只做问卷、不做观察」（决策记录第 23 条）。
-  本模块只是离线分析工具，实时接入数字人问诊时由集成方负责这些提示。
+  实时通道的这些提示在患者页 `camera-observe.js` 里：默认关闭、开启前说明一次、常驻角标、随时可关。
 
 ## Spark 实测（2026-09-26）
 
@@ -64,13 +90,15 @@ python -m pytest apps/emotion/face_body/tests -q
 - 单人：画面里多个人时只取检出的第一个。
 - 小动作量比的是相邻两个身体检出帧；中间隔着没检出（或肩不可见）的帧时，位移按两帧之间的总位移算，会偏大。
 - 处理速度（面部 + 姿态两个模型一起，CPU）：DGX Spark 约 9 帧/秒（数字人形象视频 512×512），开发机约 22 帧/秒（640×480）。离线处理够用；将来实时接入要降帧（`--stride 3`）。
-- 实时通道（患者浏览器摄像头 → Spark）未接，现在是离线处理视频文件。
+- 实时通道只在问诊结束后统计（医生端没有实时数值）；浏览器端约 5 fps，比离线视频的帧率低，眨眼这类快动作可能漏计；
+  基线取开启摄像头后的前 5 秒，开启时就偏开视线会让「目光偏离」偏低。
 
 ## 目录
 
 ```text
 features.py   逐帧：矩阵→头姿、blendshape→目光/眨眼/AU 近似、姿态点→坐姿与关节坐标（纯 numpy）
 windows.py    时间窗聚合、本人基线、unknown 判定、报告（纯 numpy）
+live.py       实时通道：浏览器打点的逐帧数值 + 问诊记录 → 按每条回答切段的同期观察（纯 numpy）
 models.py     模型登记（官方地址 + sha256）、下载与校验
 analyze.py    视频 → 报告（mediapipe + opencv，延迟导入）
 annotate.py   演示视频 + 关键帧

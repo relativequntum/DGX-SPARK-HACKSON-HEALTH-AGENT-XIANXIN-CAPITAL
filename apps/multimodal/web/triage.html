@@ -38,6 +38,23 @@
                 <div class="caption" id="caption" hidden></div>
                 <div class="toast" id="toast" hidden></div>
 
+                <!-- 摄像头观察小窗：画面只在本机处理，只上传关键点数值（camera-observe.js） -->
+                <div class="cam-box" id="cam-box" hidden>
+                    <div class="cam-badge">摄像头观察中 · 画面只在本机处理</div>
+                    <div class="cam-view">
+                        <video id="cam-video" autoplay playsinline muted></video>
+                        <canvas id="cam-canvas" width="320" height="240"></canvas>
+                    </div>
+                    <div class="cam-panel">
+                        <div class="cam-panel-head">
+                            <span>实时观察（近似）</span>
+                            <span class="obs-info" title="这些是摄像头观察到的动作数值，不代表情绪或健康状况">ⓘ</span>
+                            <button type="button" class="cam-fold" id="cam-fold">收起</button>
+                        </div>
+                        <div class="cam-panel-body" id="cam-panel-body">正在建立本人基线…</div>
+                    </div>
+                </div>
+
                 <div class="overlay" id="overlay">
                     <div class="overlay-card">
                         <h1>准备开始预问诊</h1>
@@ -71,6 +88,11 @@
                     <div class="level" aria-hidden="true"><i id="level-bar"></i></div>
                     <div class="level-num" id="level-num">电平 —</div>
                 </div>
+
+                <button type="button" class="cam-toggle" id="cam-toggle" data-state="off" aria-pressed="false" disabled
+                        title="可选：画面只在本机处理，只把面部/姿态关键点数值发给系统；不开也能正常问诊">
+                    <i class="cam-dot" aria-hidden="true"></i><span id="cam-toggle-label">摄像头观察：关</span>
+                </button>
             </div>
 
             <p class="disclaimer">
@@ -117,6 +139,8 @@
 <script src="asr/recorder-core.js" charset="UTF-8"></script>
 <script src="asr/pcm.js" charset="UTF-8"></script>
 <script src="mic-asr.js" charset="UTF-8"></script>
+<script src="camera-metrics.js" charset="UTF-8"></script>
+<script src="camera-observe.js" charset="UTF-8"></script>
 <script src="triage.js" charset="UTF-8"></script>
 </body>
 </html>
